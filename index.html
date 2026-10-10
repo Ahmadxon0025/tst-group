@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="TST Group: davlat imtiyozlari bo'yicha 63 ta chora — buxgalter uchun Kanban taxta.">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style>
+<title>TST imtiyozlar taxtasi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ledger-style CRM board — sticky toolbar, horizontally scrolling status columns, detail drawer on the right (full screen on phones). */
+:root{
+  --bg:#f2f4f1; --surface:#ffffff; --surface-2:#e8ece7; --fg:#16201a; --muted:#56635b; --line:#d3dbd4;
+  --accent:#1d6a4d; --accent-fg:#ffffff; --chip:#e2eae4; --focus:#1d6a4d;
+  --st-yangi:#68776f; --st-organ:#a86b12; --st-mos:#2b7a51; --st-jarayon:#2862a8; --st-bajarildi:#1e4d36; --st-mosemas:#9a2f2f;
+  --warn-bg:#fff3d6; --warn-fg:#6b4a00;
+  --shadow:0 1px 2px rgba(20,40,30,.08),0 6px 18px rgba(20,40,30,.06);
+  --f-ui:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1512; --surface:#18211c; --surface-2:#1f2a24; --fg:#e5ede7; --muted:#9caaa1; --line:#2c3933;
+  --accent:#4cbc8b; --accent-fg:#06120c; --chip:#233029; --focus:#4cbc8b;
+  --st-yangi:#9caaa1; --st-organ:#e3a94b; --st-mos:#5cc58c; --st-jarayon:#6ea9f2; --st-bajarildi:#44ae79; --st-mosemas:#e57d7d;
+  --warn-bg:#3a2f12; --warn-fg:#f3d58a; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1512; --surface:#18211c; --surface-2:#1f2a24; --fg:#e5ede7; --muted:#9caaa1; --line:#2c3933;
+  --accent:#4cbc8b; --accent-fg:#06120c; --chip:#233029; --focus:#4cbc8b;
+  --st-yangi:#9caaa1; --st-organ:#e3a94b; --st-mos:#5cc58c; --st-jarayon:#6ea9f2; --st-bajarildi:#44ae79; --st-mosemas:#e57d7d;
+  --warn-bg:#3a2f12; --warn-fg:#f3d58a; --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.3); color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-ui);font-size:14px;line-height:1.45;display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.top{display:flex;flex-direction:column;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.brand{display:flex;flex-direction:column;gap:2px;margin-right:auto;min-width:0}
+.brand h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.brand p{margin:0;color:var(--muted);font-size:12.5px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--st-mosemas);border-color:var(--st-mosemas)}
+.stats{display:flex;flex-wrap:wrap;gap:6px}
+.stat{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--chip);font-size:12.5px;font-variant-numeric:tabular-nums;border:0;cursor:pointer}
+.stat b{font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.search{flex:1 1 220px;min-width:0;max-width:340px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:6px 10px;cursor:pointer;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.sel{padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);max-width:100%}
+.check{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.banner{background:var(--warn-bg);color:var(--warn-fg);padding:8px 16px;font-size:13px}
+.board{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;padding:14px 16px 16px;display:flex;gap:12px;scroll-snap-type:x proximity}
+.col{flex:0 0 296px;max-width:86vw;display:flex;flex-direction:column;min-height:0;background:var(--surface-2);border-radius:12px;scroll-snap-align:start}
+.col-head{padding:10px 12px 8px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line)}
+.col-title{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px}
+.col-title .count{margin-left:auto;font-family:var(--f-mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.col-sub{color:var(--muted);font-size:12px}
+.list{flex:1;min-height:80px;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.empty{color:var(--muted);font-size:12.5px;text-align:center;padding:18px 6px;border:1px dashed var(--line);border-radius:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 11px;box-shadow:var(--shadow);cursor:grab;display:flex;flex-direction:column;gap:6px;user-select:none;-webkit-user-select:none}
+.card:hover{border-color:var(--muted)}
+.card:active{cursor:grabbing}
+.card-top{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.num{font-family:var(--f-mono);font-weight:500;color:var(--fg)}
+.cat{padding:1px 7px;border-radius:999px;background:var(--chip)}
+.imp{margin-left:auto;padding:1px 7px;border-radius:999px;border:1px solid var(--st-organ);color:var(--st-organ);font-weight:600}
+.card h3{margin:0;font-size:13.5px;font-weight:600;line-height:1.3}
+.card .short{margin:0;color:var(--muted);font-size:12.5px}
+.card-foot{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:11.5px}
+.tag{padding:1px 6px;border-radius:5px;background:var(--chip);font-family:var(--f-mono);font-size:11px}
+.due{margin-left:auto;font-family:var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.due.soon{color:var(--st-mosemas);font-weight:600}
+.has-note{color:var(--st-jarayon);font-weight:600}
+.sortable-ghost{opacity:.35}
+.sortable-chosen{box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.overlay{position:fixed;inset:0;background:rgba(10,20,15,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.d-head{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.d-head h2{margin:0;font-size:17px;line-height:1.3;text-wrap:balance}
+.d-head .meta{color:var(--muted);font-size:12px;margin-bottom:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.x{margin-left:auto;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;cursor:pointer;flex:none;font-size:18px;line-height:1}
+.d-body{flex:1;overflow-y:auto;padding:14px 16px 24px;display:flex;flex-direction:column;gap:16px}
+.status-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.status-row button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 6px;cursor:pointer;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;min-width:0}
+.status-row button[aria-pressed="true"]{border-color:currentColor;background:var(--surface-2);font-weight:600}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;margin:0 0 4px}
+.sec p{margin:0;max-width:65ch}
+.sec a{color:var(--accent)}
+.edit{display:flex;flex-direction:column;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.edit textarea{width:100%;min-height:96px;resize:vertical;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);box-sizing:border-box}
+.edit input[type=text],.edit input[type=date]{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.two label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.cos{display:flex;flex-wrap:wrap;gap:10px}
+.saved{font-size:12px;color:var(--muted);min-height:16px}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(620px,calc(100% - 32px));max-height:calc(100% - 48px);overflow:auto;background:var(--surface);border-radius:14px;z-index:22;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);box-sizing:border-box}
+.modal h2{margin:0;font-size:17px}
+.modal p{margin:0;color:var(--muted);font-size:13px}
+.modal textarea{width:100%;min-height:200px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-family:var(--f-mono);font-size:12px;box-sizing:border-box;resize:vertical}
+.modal .row{justify-content:flex-end}
+.modal label{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.modal input[type=text],.modal input[type=date],.modal select{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.hint{color:var(--muted);font-size:12px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:8px;z-index:30;font-size:13px}
+@media (max-width:640px){
+  .top{padding:12px 16px 8px}
+  .brand h1{font-size:16px}
+  .two{grid-template-columns:minmax(0,1fr)}
+  .status-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .search{max-width:none}
+  .stats{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+  .stat{flex:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="row">
+    <div class="brand">
+      <h1>Davlat imtiyozlari taxtasi</h1>
+      <p>TST · GIT · Mirshikor · Ibrat — 63 ta chora. Kartani sudrab yoki bosib ustunga o'tkazing.</p>
+    </div>
+    <button class="btn" id="btn-add" type="button">+ Vazifa</button>
+    <button class="btn" id="btn-backup" type="button">Zaxira</button>
+    <button class="btn primary" id="btn-report" type="button">Hisobot</button>
+  </div>
+  <div class="stats" id="stats" aria-label="Ustunlar bo'yicha soni"></div>
+  <div class="filters">
+    <input class="search" id="q" type="search" placeholder="Qidirish: raqam, nom, qonun…" aria-label="Qidirish">
+    <div class="seg" id="co-filter" role="group" aria-label="Korxona">
+      <button type="button" data-co="" aria-pressed="true">Hammasi</button>
+      <button type="button" data-co="TST" aria-pressed="false">TST</button>
+      <button type="button" data-co="GIT" aria-pressed="false">GIT</button>
+      <button type="button" data-co="Mirshikor" aria-pressed="false">Mirshikor</button>
+      <button type="button" data-co="Ibrat" aria-pressed="false">Ibrat</button>
+    </div>
+    <select class="sel" id="cat-filter" aria-label="Yo'nalish"></select>
+    <label class="check"><input type="checkbox" id="imp-only"> Faqat muhim</label>
+  </div>
+</header>
+<div class="banner" id="storage-banner" hidden>Bu brauzer o'zgarishlarni saqlay olmayapti. Ishni yo'qotmaslik uchun "Zaxira" orqali kodni nusxalab qo'ying.</div>
+<main class="board" id="board" aria-label="Imtiyozlar taxtasi"></main>
+
+<div class="overlay" id="overlay" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-labelledby="d-title" role="dialog" aria-modal="true">
+  <div class="d-head">
+    <div style="min-width:0">
+      <div class="meta" id="d-meta"></div>
+      <h2 id="d-title"></h2>
+    </div>
+    <button class="x" id="d-close" type="button" aria-label="Yopish">×</button>
+  </div>
+  <div class="d-body" id="d-body"></div>
+</aside>
+
+<section class="modal" id="m-report" hidden role="dialog" aria-modal="true" aria-labelledby="m-report-h">
+  <h2 id="m-report-h">Hisobot — Telegram uchun</h2>
+  <p>Matnni nusxalab guruhga yuboring. Telegram bitta xabarda 4 096 belgigacha qabul qiladi.</p>
+  <label class="check"><input type="checkbox" id="rep-notes" checked> Izohlarni qo'shish</label>
+  <textarea id="rep-text" readonly aria-label="Hisobot matni"></textarea>
+  <div class="hint" id="rep-count"></div>
+  <div class="row"><button class="btn" type="button" data-close>Yopish</button><button class="btn primary" type="button" id="rep-copy">Nusxa olish</button></div>
+</section>
+
+<section class="modal" id="m-backup" hidden role="dialog" aria-modal="true" aria-labelledby="m-backup-h">
+  <h2 id="m-backup-h">Zaxira va boshqa qurilmaga ko'chirish</h2>
+  <p>Butun taxta holati shu kodda. Uni Telegramda Ahmadxonga yuboring — u o'z telefonida "Yuklash" orqali xuddi shu taxtani ko'radi. Boshqa qurilmaga o'tganda ham shu yo'l bilan ko'chiring.</p>
+  <textarea id="bk-out" readonly aria-label="Zaxira kodi"></textarea>
+  <div class="row"><button class="btn primary" type="button" id="bk-copy">Kodni nusxalash</button></div>
+  <label for="bk-in">Kod qo'yish (yuklash uchun)</label>
+  <textarea id="bk-in" placeholder="Zaxira kodini shu yerga qo'ying" style="min-height:90px"></textarea>
+  <div class="hint" id="bk-msg"></div>
+  <div class="row">
+    <button class="btn danger" type="button" id="bk-reset">Boshlang'ich holatga qaytarish</button>
+    <button class="btn" type="button" data-close>Yopish</button>
+    <button class="btn primary" type="button" id="bk-load">Yuklash</button>
+  </div>
+</section>
+
+<section class="modal" id="m-add" hidden role="dialog" aria-modal="true" aria-labelledby="m-add-h">
+  <h2 id="m-add-h">Yangi vazifa yoki chora</h2>
+  <label>Nomi<input type="text" id="add-title" maxlength="140"></label>
+  <label>Qisqacha<input type="text" id="add-short" maxlength="200"></label>
+  <label>Muddat<input type="date" id="add-due"></label>
+  <div class="cos" id="add-co"></div>
+  <div class="hint" id="add-msg"></div>
+  <div class="row"><button class="btn" type="button" data-close>Bekor qilish</button><button class="btn primary" type="button" id="add-save">Qo'shish</button></div>
+</section>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<script>
+(function(){
+"use strict";
+var DOC_URL="https://claude.ai/code/artifact/381c80d3-df11-4185-b908-86cf53723013";
+var COLS=[
+ {id:"yangi",name:"Yangi",sub:"Hali ko'rib chiqilmagan",color:"var(--st-yangi)"},
+ {id:"organ",name:"O'rganilmoqda",sub:"Shartlarni tekshiryapman",color:"var(--st-organ)"},
+ {id:"mos",name:"Bizga mos",sub:"Foydalanamiz",color:"var(--st-mos)"},
+ {id:"jarayon",name:"Jarayonda",sub:"Ariza berildi, ish ketyapti",color:"var(--st-jarayon)"},
+ {id:"bajarildi",name:"Bajarildi",sub:"Natija olindi",color:"var(--st-bajarildi)"},
+ {id:"mosemas",name:"Mos emas",sub:"Bizga to'g'ri kelmaydi",color:"var(--st-mosemas)"}
+];
+var CATS={soliq:"Soliq",qarz:"Soliq qarzi",bank:"Bank",mib:"MIB va sud",moliya:"Moliyalashtirish",eksport:"Bojxona va eksport",energiya:"Energiya",xodim:"Xodimlar",mulk:"Mulk va yer",boshqa:"Boshqa"};
+var COS=["TST","GIT","Mirshikor","Ibrat"];
+var ALL=["TST","GIT","Mirshikor","Ibrat"];
+var M=[
+{n:1,cat:"soliq",imp:1,due:"2026-10-25",co:["TST","GIT"],t:"PF-229: 2% foyda solig'i va 1% ijtimoiy soliq",s:"Foyda solig'i 15%→2%, ijtimoiy soliq 12%→1% (01.01.2028 gacha)",b:"Foyda solig'i 15% o'rniga 2%, ijtimoiy soliq 12% o'rniga 1%.",a:"PF-229, 27.12.2024, 2-band (PF-6 va PF-174 tahririda); SK 483-modda",u:"https://lex.uz/ru/docs/7283092",c:"Jami daromadning kamida 70% i to'quv mahsulotlari (trikotaj polotno, paxta gazlamasi, paypoq), tikuv-trikotaj, poyabzal yoki charm mahsulotlari sotuvidan; o'rtacha oylik ish haqi kamida 2 MHTEKM (01.09.2026 dan 2,72 mln so'm). Bir oy shart bajarilmasa, butun chorak to'liq stavkada qayta hisoblanadi va penya qo'shiladi.",k:"TST — ehtimol (bo'yash va usluga daromadi hisobga olinishini tasdiqlash kerak); GIT — to'quvchilik qayta boshlangach.",v:"2026 yilning har oyi uchun daromad tarkibi va o'rtacha ish haqini jadvalga chiqarish; imtiyoz hozir qo'llanilayotganini tekshirish; Soliq qo'mitasiga bo'yash va usluga daromadi «paxta gazlamasi» sotuvi hisoblanadimi, degan yozma so'rov yuborish. Har chorakdan keyingi oyning 25-sanasigacha my.soliq.uz da.",m:"01.01.2025–01.01.2028; lex.uz da tekshirilgan."},
+{n:2,cat:"soliq",co:["TST","GIT"],t:"PQ-290: to'qimachilikka 1% ijtimoiy soliq",s:"Ijtimoiy soliq 1% (01.09.2028 gacha)",b:"Ijtimoiy soliq 12% o'rniga 1%.",a:"PQ-290, 19.09.2025, 8-band",u:"https://lex.uz/docs/7736689",c:"To'qimachilik va tikuv-trikotaj faoliyati; faoliyat kodlari (OKED) mos bo'lishi kerak.",k:"TST; GIT — ish haqi to'lana boshlagach.",v:"1-chora qo'llanilmasa ham shu imtiyoz qo'llanyaptimi — tekshirish; OKED kodlarini tekshirish.",m:"01.09.2025–01.09.2028; ikkilamchi manba."},
+{n:3,cat:"soliq",co:["GIT","TST"],t:"Investitsiya chegirmasi (SK 308-modda)",s:"Yangi uskuna qiymatining 20% i foyda solig'idan chegiriladi",b:"Foyda solig'i bazasidan yangi texnologik uskuna qiymatining 20% i, ishlab chiqarish binosini qurish yoki rekonstruksiya qilish qiymatining 10% i chegiriladi.",a:"Soliq kodeksi 308-modda",u:"",c:"Uskuna ishlab chiqarilganiga 3 yildan oshmagan; 3 yil ichida sotilsa, chegirma qaytariladi.",k:"GIT (yangi dastgohlar); TST (yangi bo'yash uskunasi). 1-chora qo'llansa, foydasi kam.",v:"Asosiy vositalar kartochkasida ishlab chiqarilgan yilni qayd etish; yillik deklaratsiyada qo'llash.",m:"Doimiy; ikkilamchi manba — joriy tahririni tekshirish."},
+{n:4,cat:"soliq",co:["GIT"],t:"Zararlarni kelgusi yillarga o'tkazish (SK 333-modda)",s:"Zarar 10 yilga o'tkaziladi — GIT sotuv foydasini kamaytiradi",b:"Zarar 10 yil davomida, har yili soliq bazasining 60% igacha o'tkaziladi.",a:"Soliq kodeksi 333-modda",u:"",c:"Aylanmadan olinadigan soliq yoki imtiyoz yillaridagi zarar o'tkazilmaydi.",k:"GIT — ishlamagan yillar zarari yuqori qismni sotishdan keladigan foydani kamaytiradi.",v:"GIT ning yillar bo'yicha zararlar reyestrini tuzish; sotuv rejasiga soliq hisobini qo'shish.",m:"Doimiy; ikkilamchi manba."},
+{n:5,cat:"soliq",co:["TST"],t:"QQS 0% stavka (SK 260, 264-moddalar)",s:"Eksport va IM-51 bo'yicha qayta ishlash xizmati 0% QQS",b:"Eksport 0%. Qayta ishlash rejimida (IM-51) olib kirilib, qayta ishlangan va eksport qilinadigan tovar bo'yicha qayta ishlash xizmati ham 0%.",a:"Soliq kodeksi 260 va 264-moddalar",u:"",c:"Orient Home uchun ichki usluga xizmat haqiga 12% QQS.",k:"TST.",v:"Turkman bo'zi IM-51 rejimida kirsa, TST xizmat haqiga 0% qo'llash; eksport hujjatlarini QQS deklaratsiyasiga ilova qilish; usluga shartnomalaridagi QQS stavkasini tekshirish.",m:"Doimiy; ikkilamchi manba."},
+{n:6,cat:"soliq",co:["GIT","TST"],t:"Uskuna importida QQS va bojdan ozod qilish",s:"Yangi dastgoh importi QQS va bojsiz (VMQ-352)",b:"Yangi texnologik uskuna import QQS va bojxona bojisiz kiradi; lizingda lizing beruvchi QQSni faqat o'z ustamasiga hisoblaydi.",a:"SK 246-modda 6-band; VMQ-352 ro'yxati (to'quv dastgohlari HS 8446), VMQ-393 (20.07.2026) bilan to'ldirilgan",u:"https://lex.uz/ru/docs/5445273",c:"Ishlab chiqarilganiga 3 yildan oshmagan, O'zbekistonda ishlab chiqarilmaydi, ro'yxatda bor. 3 yil ichida sotilsa, eksport qilinsa yoki tekin berilsa, imtiyoz qaytariladi.",k:"GIT (dastgohlar, lizing orqali ham); TST (bo'yash uskunasi).",v:"Dastgoh modelining HS kodi va ishlab chiqarilgan yilini ro'yxat bilan solishtirish; importni GIT emas, TST yoki lizing kompaniyasi nomiga rasmiylashtirish (GIT da MIB ishlari bor).",m:"Doimiy; ikkilamchi manba."},
+{n:7,cat:"soliq",co:ALL,t:"Mol-mulk solig'i: stavka va koeffitsient",s:"Dastgohga soliq yo'q; kengashdan kamaytiruvchi koeffitsient",b:"Stavka 1,5%; faqat ko'chmas mulk soliqqa tortiladi, dastgohlar soliqsiz. Ishlatilmayotgan binolar uchun oshirilgan stavkalar 01.07.2022 dan bekor.",a:"Soliq kodeksi; Spot.uz, 07.01.2026",u:"https://www.spot.uz/ru/2026/01/07/property-tax-2026/",c:"Minimal baza 1 m² uchun Namangan shahrida 2,35 mln so'm, boshqa joylarda 1,39 mln so'm; kengash kamaytiruvchi koeffitsient belgilashi mumkin.",k:"Hammasi. GIT yuqori qismi: 5 116 m² × 2,35 mln × 1,5% ≈ 180 mln so'm yiliga.",v:"Har bir obyekt bo'yicha hisoblangan soliqni tekshirish; tuman yoki shahar kengashidan koeffitsient so'rash; Mirshikor qarzini 13-choraga kiritish.",m:"Har yil; ikkilamchi manba."},
+{n:8,cat:"soliq",co:ALL,t:"Yer solig'i va suv solig'i",s:"Kengash koeffitsienti 0,5 gacha tushishi mumkin",b:"Yer: Namangan viloyatida qishloq xo'jaligiga mo'ljallanmagan yer uchun 1 gektarga 51,8 mln so'm (2026); viloyat kengashi 0,5–1,2 koeffitsient qo'llashi mumkin. Suv: sanoat uchun limit ichida yer usti suvi 749 so'm/m³, yer osti suvi 910 so'm/m³; limitdan ortig'i oshirilgan stavkada.",a:"Soliq kodeksi; Spot.uz, 08.01.2026",u:"https://www.spot.uz/ru/2026/01/08/land-tax-2026/",c:"Imtiyoz yo'q, faqat koeffitsient orqali pasaytirish.",k:"Hammasi; suv — asosan TST.",v:"Soliq idorasi oldindan to'ldirgan deklaratsiyalarni 5 kun ichida tekshirish (aks holda qabul qilingan hisoblanadi); suv limitlarini nazorat qilish.",m:"Yer solig'i 20-yanvargacha; ikkilamchi manba."},
+{n:9,cat:"soliq",co:["GIT"],t:"Aylanmadan olinadigan soliq (kichik korxona)",s:"Aylanma solig'i 4% (5,28 mlrd so'mgacha)",b:"Daromaddan 4%; chegara 01.09.2026 dan 12 000 BHM (≈5,28 mlrd so'm).",a:"PF-100 (chegara)",u:"https://lex.uz/ru/docs/-8236831",c:"QQS zanjiri uziladi va 1-chora qo'llanmaydi.",k:"GIT — kichik bo'lsa ham, odatda QQS + 1-chora foydaliroq.",v:"GIT qayta ishga tushganda ikki variantni hisoblab solishtirish.",m:"Chegara lex.uz da tekshirilgan; stavka — ikkilamchi manba."},
+{n:10,cat:"soliq",co:["TST","Mirshikor"],t:"Hudud toifalari (PF-287)",s:"3–5-toifali tumanlarda qo'shimcha imtiyozlar",b:"4–5-toifali tumanlarda kichik biznes uchun soliq va kredit imtiyozlari.",a:"PF-287, 30.12.2022",u:"https://lex.uz/uz/docs/6333227",c:"Namangan shahri — 1-toifa; Kosonsoy, Namangan tumani, Pop, Chortoq, Chust, Yangiqo'rg'on — 3; Norin — 4; Mingbuloq — 5.",k:"GIT (Namangan shahri) — yo'q. TST va Mirshikor — ro'yxatdan o'tgan tumaniga bog'liq.",v:"TST va Mirshikorning yuridik manzili qaysi tumanda ekanini aniqlash.",m:"lex.uz da tekshirilgan."},
+{n:11,cat:"soliq",co:["GIT","Mirshikor","TST"],t:"Tekshiruvlarni cheklash (PF-175, 1–4-bandlar)",s:"Kichik biznesga 3 yil tekshiruv moratoriysi",b:"Kichik biznes uchun 28.08.2026 dan 3 yillik tekshiruv moratoriysi (QQS qaytarish tekshiruvi bundan mustasno); bir yil ichida takroriy tekshiruv faqat Biznes ombudsmani roziligi bilan; birinchi xato uchun ogohlantirish va 10 kun muhlat; 2027 yildan o'rta va yirik korxona ixtiyoriy audit o'tkazsa, o'sha davr soliq tekshiruvidan ozod.",a:"PF-175, 27.08.2026, 1–4-bandlar",u:"https://lex.uz/ru/docs/8442719",c:"Kichik korxona — yillik daromad 1–10 mlrd so'm.",k:"GIT va Mirshikor (kichik bo'lsa); TST — qisman.",v:"Har bir korxonaning toifasini aniqlash; asossiz tekshiruv bo'lsa, ombudsmanga murojaat qilish.",m:"lex.uz da tekshirilgan."},
+{n:12,cat:"soliq",co:ALL,t:"2027 yildan imtiyozlarni saqlash sharti (O'RQ-1108)",s:"2027 yil soliq imtiyozlarini saqlash shartlari",b:"2027 yildan mol-mulk va yer solig'i imtiyozlari saqlanishi uchun 2026 yil daromadi imtiyoz summasidan ko'p bo'lishi va kamida 3 xodimga 2 MHTEKM dan kam bo'lmagan ish haqi to'langan bo'lishi kerak.",a:"O'RQ-1108, 25.12.2025",u:"https://lex.uz/ru/docs/7944527",c:"Imtiyozdan foydalanayotgan har bir korxona.",k:"Ayniqsa ishlamayotgan GIT.",v:"Qaysi korxonada qanday mol-mulk yoki yer imtiyozi borligini ro'yxatlash va shartlarni 2026 yil oxirigacha bajarish.",m:"2027 yildan; ikkilamchi manba."},
+{n:13,cat:"qarz",imp:1,due:"2026-12-31",co:ALL,t:"«Ikkinchi imkoniyat» soliq amnistiyasi (PF-175, 7-band)",s:"Asosiy soliq qarzi 31.12.2026 gacha to'lansa — penya kechiriladi, soliq MIB ishlari yopiladi",b:"31.12.2026 gacha soliq qarzi (penyasiz) to'liq to'lansa, unga hisoblangan penya hisobdan chiqariladi va tegishli majburiy ijro ishlari tugatiladi. 01.01.2026 gacha hisobotni kechiktirib topshirganlik uchun to'lanmagan jarimalar hisobdan chiqariladi. O'zi tuzatgan deklaratsiya bo'yicha penya hisoblanmaydi.",a:"PF-175, 27.08.2026, 7-band",u:"https://lex.uz/ru/docs/8442719",c:"Kichik va o'rta tadbirkorlik subyektlari; 01.01.2027 holatiga penyadan tashqari soliq qarzi bo'lmasligi shart.",k:"GIT (ikkita soliq MIB ishi), TST (muddati o'tgan soliqlar), Mirshikor (yer, mol-mulk, suv soliqlari), Ibrat (qarzi bo'lsa).",v:"Har bir korxona bo'yicha asosiy qarz va penyani alohida ajratish; soliq idorasi bilan solishtirma dalolatnoma olish; to'lov jadvalini tuzib Ahmadxonga berish; to'lovdan keyin penya hisobdan chiqarilganini va MIB ishlari yopilganini tekshirish. Kechiktirilgan soliq 01.01.2027 da «qarz» hisoblanadimi — soliq idorasidan yozma so'rash.",m:"31.12.2026; lex.uz da tekshirilgan."},
+{n:14,cat:"qarz",co:["TST","GIT"],t:"Soliqni kechiktirish yoki bo'lib to'lash (SK 97–102)",s:"Soliqni 1 yilgacha kechiktirish yoki bo'lib to'lash",b:"1 yilgacha kechiktirish yoki bo'lib to'lash. Birdaniga to'lash bankrotlikka olib kelishi mumkin bo'lsa, foizsiz bo'lishi mumkin; penya va jarima muddati ham ko'chirilishi mumkin.",a:"Soliq kodeksi 97–102-moddalar",u:"https://buxgalter.uz/publish/doc/text186672_kto_ne_smojet_poluchit_otsrochku_po_nalogam_i_peni",c:"Sof aktivlar miqdori bilan cheklangan. Bankrotlik ishi qo'zg'atilgan, soliq bo'yicha jinoyat ishi bor yoki oxirgi 3 yilda kechiktirish bekor qilingan bo'lsa, berilmaydi.",k:"TST, GIT — amnistiyaga pul yetmasa.",v:"Sof aktivlarni hisoblash; Soliq qo'mitasiga ariza tayyorlash.",m:"Doimiy; ikkilamchi manba."},
+{n:15,cat:"qarz",co:["GIT","Mirshikor","TST"],t:"Sanatsiyada mahalliy soliqlarni kechiktirish (PF-78)",s:"Sanatsiyada mahalliy soliqlarni kengash orqali kechiktirish",b:"Tuman yoki shahar kengashi suv, mol-mulk, yer solig'i va aylanmadan olinadigan soliqni (tekshiruvda qo'shimcha hisoblangan soliq va sanksiyalar bilan) kechiktirishi yoki bo'lib to'lashga ruxsat berishi mumkin. Garov, bank kafolati yoki sug'urta polisi berilsa, soliq organi moliyaviy holatdan qat'i nazar kechiktirishni berishi shart. Ariza elektron, 20 kunda ko'riladi.",a:"PF-78, 06.05.2026, 10-band",u:"https://lex.uz/ru/docs/8180732",c:"Korxona sudgacha sanatsiyada, sanatsiya rejasi bilan (19-chora).",k:"GIT, Mirshikor; TST — kerak bo'lsa.",v:"Kengashga ariza uchun soliq qarzlari ro'yxati; garovga berilishi mumkin bo'lgan mulk ro'yxati.",m:"01.09.2026 dan; lex.uz da tekshirilgan."},
+{n:16,cat:"qarz",imp:1,due:"2026-10-31",co:["GIT","TST"],t:"QQS qaytarish va GIT arizasini qayta topshirish",s:"QQS 1 kunda avtomatik qaytariladi; GIT 350 mln so'mlik arizani qayta topshiradi",b:"01.10.2026 dan eksportchilar QQS hisobotining yangi shakli (10006_47) bilan manfiy farqni xavf tahlili asosida 1 kunda avtomatik qaytarib oladi. 10 mln so'mgacha arizasiz avtomatik qaytariladi (PF-100). PF-175 9-band: barqarorlik reytingidan qat'i nazar qaytariladi. PQ-246: «A» reytingli to'qimachilik korxonalariga tezlashtirilgan qaytarish 01.07.2027 gacha.",a:"Soliq qo'mitasi xabari №81255; PF-100; PF-175 9-band; PQ-246",u:"https://buxgalter.uz/publish/doc/text217211_otrajenie_valyutnoy_vyruchki_v_otchetnosti_po_nds_chto_menyaetsya",c:"my.soliq.uz da valyuta tushumi ma'lumotlari to'liq bo'lishi kerak; eksport bo'yicha kirim QQS kelgan valyuta tushumiga mutanosib hisobga olinadi.",k:"TST; GIT — ~350 mln so'mlik ariza 30.09.2026 da kameral tekshiruvdan keyin rad etilgan (7-ilova va boshqa hujjatlar yo'q).",v:"GIT arizasini 7-ilova va yetishmagan hujjatlar bilan qayta topshirish; yetkazib beruvchilarning soliq qarzi summani kamaytiradimi — tekshirish; rad etish asoslarini yozma olish va kerak bo'lsa shikoyat qilish; TST da yangi shakl bo'yicha avtomatik qaytarishga o'tish.",m:"GIT — 31.10.2026; PF-100, PF-175 lex.uz da tekshirilgan."},
+{n:17,cat:"bank",imp:1,due:"2026-12-15",co:["TST","GIT"],t:"PF-4, 3-band: kreditni uzaytirish va qayta moliyalash",s:"Kredit 7 yilgacha uzaytiriladi, 7% dan qimmat valyuta krediti qayta moliyalanadi",b:"«Sog'lomlashtirish imkoniyati bor» deb topilgan korxonaning tijorat kreditlari 7 yilgacha uzaytirilishi mumkin; xorijiy valyutada 7% dan, milliy valyutada 16% dan qimmat kreditlar Agentlik mablag'lari hisobidan qayta moliyalanadi; to'liq to'langan paxta xomashyosi yoki tolasi garovi bilan 2 mln dollargacha kredit.",a:"PF-4, 12.01.2026, 3-band",u:"https://lex.uz/ru/docs/7994713",c:"Korxonalar «yashil», «sariq», «qizil» toifalarga bo'linadi; usul e'lon qilinmagan, baholashni Agentlik va bankning yengil sanoat guruhi qiladi. Uzaytirish bank ixtiyorida; qayta moliyalash faqat Agentlik liniyasi bor banklarda.",k:"TST — ehtimol; GIT — «sariq» toifa berilsa.",v:"Bank uchun paket: balans, foyda va zarar, pul oqimi, qarzlar jadvali; toifamiz qaysi ekanini bankdan yozma so'rash; muzlatishni aynan shu band asosida rasmiylashtirishni so'rash; foiz hisoblanishi to'xtaydimi yoki faqat keyinga suriladimi — yozma olish.",m:"lex.uz da tekshirilgan. Bank to'lovi 15.12.2026."},
+{n:18,cat:"bank",co:["GIT"],t:"PF-4, 6-band: hisob muzlatilgan bo'lsa ham operatsiyalar",s:"Kartotekada ham garov, ruxsatnoma va energiya to'lovi mumkin",b:"Hisobvaraqlarga cheklov bo'lsa ham kredit garov shartnomalarini notarial rasmiylashtirish, davlat xizmatlari markazlari orqali ruxsat hujjatlari olish va energiya uchun to'lov qilish mumkin.",a:"PF-4, 12.01.2026, 6-band",u:"https://lex.uz/ru/docs/7994713",c:"Yengil sanoat korxonasi; amaliy tartibni Adliya vazirligi va MIB joriy qilishi kerak.",k:"GIT (kartoteka).",v:"GIT ning energiya to'lovlarini kartotekaga qaramay shu asosda o'tkazish mumkinligini bank va MIB dan so'rash.",m:"lex.uz da tekshirilgan; amalda ishlashi noma'lum."},
+{n:19,cat:"bank",co:["GIT","TST"],t:"PF-78: sudgacha sanatsiya",s:"Sudgacha sanatsiya: bank foizni to'xtatishi mumkin",b:"01.09.2026 dan sudgacha sanatsiya davrida bank qarzdor bilan kelishuv asosida mavjud kreditlar bo'yicha foiz hisoblash va to'lashni to'xtatishi, keyin rejaga ko'ra kreditni qayta tuzishi mumkin.",a:"PF-78, 06.05.2026, 10-band",u:"https://lex.uz/ru/docs/8180732",c:"Rasmiy sudgacha sanatsiya va yozma sanatsiya rejasi; bank uchun ixtiyoriy; MIB ijrosini to'xtatmaydi.",k:"GIT, TST.",v:"Sanatsiya rejasi uchun moliyaviy model va qarzlar reyestri; yurist bilan kirish tartibini aniqlash.",m:"01.09.2026 dan; lex.uz da tekshirilgan."},
+{n:20,cat:"bank",co:["TST","GIT"],t:"PQ-290: tiklanish rejasi va ro'yxatlar",s:"Tiklanish rejasi va 138/144 korxona ro'yxati",b:"Tijorat krediti bor har bir to'qimachilik korxonasiga sog'lomlashtirish rejasi va kreditni 7 yilgacha uzaytirish bo'yicha ko'rsatma. 2025 yilda 144 ta, 2026 yilda 138 ta korxona ro'yxatlari va 200 mln dollarlik imtiyozli aylanma mablag' kreditlari e'lon qilingan.",a:"PQ-290, 19.09.2025; president.uz, 23.12.2025",u:"https://lex.uz/docs/7736689",c:"Ro'yxatlar ochiq e'lon qilinmagan.",k:"TST, GIT.",v:"Agentlik va bankdan TST va GIT ro'yxatda bormi — yozma so'rash.",m:"lex.uz da tekshirilgan; ro'yxatlar tasdiqlash kerak."},
+{n:21,cat:"bank",imp:1,due:"2026-11-30",co:["GIT"],t:"PF-177: mulkni qarz evaziga bankka berish",s:"Mulkni qarz evaziga bankka QQSsiz berish",b:"Qarz evaziga bankka berilgan mulk 01.01.2030 gacha QQSdan ozod, hatto taqiqlar bo'lsa ham. Bank 6 oy mol-mulk va yer solig'idan ozod va mulkni bozor qiymatida to'g'ridan-to'g'ri, bo'lib to'lash bilan ham sotishi mumkin. Xaridor to'liq to'lagandan keyin 12 oy mol-mulk va yer solig'idan ozod.",a:"PF-177, 28.08.2026, 5-band",u:"https://lex.uz/uz/docs/-8458324",c:"Bank roziligi; narx va xaridorni bank belgilaydi; mulkka oid boshqa majburiyatlar GIT da qoladi.",k:"GIT yuqori qismi — ~150 ming dollarlik QQSni tejash mumkin.",v:"QQS va foyda solig'i bo'yicha ikki variantni (o'zimiz sotish va bank orqali) hisoblab solishtirish.",m:"01.01.2030 gacha; lex.uz da tekshirilgan."},
+{n:22,cat:"bank",co:["GIT"],t:"Sud sanatsiyasi (O'RQ-763) — oxirgi chora",s:"Sud sanatsiyasi — faqat oxirgi chora",b:"Sud arizani qabul qilgach, kreditorlar, shu jumladan MIB, qarzni alohida undira olmaydi.",a:"O'RQ-763, bankrotlik to'g'risidagi qonun",u:"https://lex.uz/ru/docs/5957616",c:"Vaqtinchalik boshqaruvchi tayinlanadi; rejani kreditorlar tasdiqlaydi; ilgari tuzilgan bitimlar bekor qilinishi mumkin; 01.12.2026 dan ochiq reyestr; ariza kech berilsa, rahbarlar subsidiar javobgar.",k:"Faqat GIT, oxirgi chora sifatida.",v:"To'lov qobiliyatsizligi belgilarini (3 oydan ortiq to'lanmagan qarzlar) kuzatish va rahbariyatga darhol xabar berish.",m:"Yurist bilan tekshirilsin."},
+{n:23,cat:"mib",imp:1,due:"2026-10-31",co:["GIT"],t:"Ijroni sud orqali bo'lib to'lash (IPK 342-modda)",s:"Sud orqali ijroni bo'lib to'lash, 20 kunda hal qilinadi",b:"Sud o'z qarorining ijrosini kechiktirishi, bo'lib to'lashni belgilashi yoki ijro usulini o'zgartirishi mumkin. Ariza ko'rilayotgan paytda bu ijroni to'xtatib turish uchun asos bo'ladi; iqtisodiy sud 20 kunda hal qiladi.",a:"Iqtisodiy protsessual kodeksi 342-modda; ijro to'g'risidagi Qonun 258-II, 32 va 35-moddalar",u:"https://lex.uz/ru/acts/13896",c:"Qarzdor, undiruvchi yoki ijrochi ariza beradi; sabablar hujjat bilan asoslanadi.",k:"GIT — 4 ta MIB ishi (elektr ~148 ming dollar, 2 ta soliq, 1 ta boshqa) va Xitoy dastgohlari bo'yicha 60 ming dollarlik sud ishi.",v:"Har bir ish bo'yicha jadval: undiruvchi, summa, qaror sanasi, sud nomi, to'langan qismi, taklif qilinadigan oylik to'lov; yurist uchun moliyaviy holat haqida ma'lumotnoma.",m:"Arizalar 31.10.2026 gacha; yurist tekshirsin."},
+{n:24,cat:"mib",co:["GIT","Mirshikor"],t:"Ijro bosqichida kelishuv bitimi",s:"Kelishuv bitimi bilan MIB ishini yopish",b:"Sud tasdiqlagan kelishuv bitimi ijroni tugatadi; undiruvchi mediatsiya uchun ijroni 15 kungacha to'xtatib turishi mumkin.",a:"Oliy sud Plenumi qarori; Norma.uz",u:"https://www.norma.uz/oz/qonunchilikda_yangi/ijro_ishini_yuritish_soddalashtirilmoqda",c:"Undiruvchining roziligi.",k:"GIT — elektr tarmog'i bilan oylik ~100 mln so'mlik kelishuv sudda tasdiqlansa, MIB ishi yopilishi mumkin; Mirshikor — fermerlar bilan.",v:"Elektroset bilan amaldagi to'lov kelishuvini yozma shaklga keltirish; sakkizta fermer xo'jaligi bilan solishtirma dalolatnomalar tuzish.",m:"Doimiy; ikkilamchi manba."},
+{n:25,cat:"mib",co:["GIT","Mirshikor","TST"],t:"Kartoteka va muzlatilgan hisob: yopish yo'llari",s:"Kartotekani yopish yo'llari (13, 18, 23-choralar)",b:"Soliq qarzi amnistiya bo'yicha (13-chora) to'lansa, soliq kartotekasi va soliq MIB ishlari yopiladi. PF-4 6-band (18-chora) bo'yicha energiya to'lovi va garov rasmiylashtiriladi. Qolgan qarzlar sud orqali bo'lib to'lanadi (23-chora).",a:"PF-175 7-band; PF-4 6-band; IPK 342",u:"",c:"Kredit bo'yicha bank kartotekasi faqat bank bilan kelishuv orqali yechiladi.",k:"GIT, Mirshikor; TST — Mirshikorning elektr va fermer qarzlarini to'layotgani uchun.",v:"Har bir kartoteka yozuvi bo'yicha: kim qo'ygan (soliq, MIB, bank), summa, sana va qaysi chora bilan yopiladi; TST orqali to'lanayotgan Mirshikor qarzlarini alohida hisobga olish.",m:"Soliq qismi 31.12.2026 gacha."},
+{n:26,cat:"moliya",imp:1,due:"2026-10-31",co:["TST"],t:"Yengil sanoat jamg'armasi krediti (PF-174; VMQ-729)",s:"200 mln $ fond, aylanma mablag' krediti",b:"Tiklanish va taraqqiyot jamg'armasidan 200 mln dollar Jamg'armaga 4% da beriladi va tijorat banklari orqali aylanma mablag' krediti va faktoring sifatida tarqatiladi.",a:"PF-174, 11-band; VMQ-729, 3-ilova (12.08.2026 tahriri)",u:"https://lex.uz/ru/docs/7846014",c:"Foiz, muddat, limit va garov VMQ-729 3-ilovasida (onlayn o'qib bo'lmadi); Agentlik tavsiyasi kerak.",k:"TST — ehtimol; GIT — hozircha yo'q.",v:"Bankdan 3-ilova matni va ariza shaklini olish; 12 oylik sotuv va eksport ma'lumotlari, moliyaviy hisobotlarni tayyorlash.",m:"Raqamlar tasdiqlash kerak."},
+{n:27,cat:"moliya",imp:1,due:"2026-10-31",co:["TST"],t:"Agentlik savdo moliyalashtirishi (PF-2, PF-4 tahririda)",s:"Sotuvga qarab 1–5 mln $, 3 yil",b:"3 yilgacha aylanma kredit, oxirgi 12 oylik sotuvga qarab: 5 mln dollargacha sotuv — 1 mln; 5–10 mln — 2 mln; 10–15 mln — 3 mln; 15–20 mln — 4 mln; 20 mln dan ortiq — 5 mln dollar. Qisman qaytarilsa, mutanosib yangi kredit ochiladi.",a:"PF-2, PF-4 2-ilova bilan o'zgartirilgan",u:"https://lex.uz/docs/6351347",c:"«Qizil» toifa chiqarilishi mumkin; usluga sxemasida TST ning «sotuvi» faqat xizmat haqi, shuning uchun limit kichikroq.",k:"TST.",v:"TST ning 12 oylik sotuvini hisoblash (usluga va to'g'ridan-to'g'ri sotuv alohida); Orient Home orqali eksport hajmini ko'rsatuvchi hujjatlar.",m:"31.12.2030 gacha; lex.uz da tekshirilgan."},
+{n:28,cat:"moliya",co:["TST"],t:"PF-174, 10-band: 3–5-toifali tumandagi filial uchun kredit",s:"200 o'rinli filial: 10 mlrd so'm, 5 yil",b:"10 mlrd so'mgacha (~850 ming dollar), 5 yilga, Markaziy bank asosiy stavkasida.",a:"PF-174, 10-band",u:"https://lex.uz/ru/docs/7737268",c:"3–5-toifali tumanda 200 ish o'rinli to'qimachilik filiali ochish.",k:"Yangi to'quv sexi — agar TST yeri shunday tumanda bo'lsa (10-chora).",v:"TST yeri qaysi tumanda ekanini tekshirish; to'quv sexi biznes-rejasiga raqamlar tayyorlash.",m:"lex.uz da tekshirilgan."},
+{n:29,cat:"moliya",co:["TST","GIT"],t:"PF-71 / PF-176: uskuna krediti foizi kompensatsiyasi",s:"6% dan oshgan foizni davlat qoplaydi (5 punktgacha)",b:"Mato, trikotaj yoki bo'yash-pardozlash uskunasi uchun valyuta kreditining dastlabki 7 mln dollari bo'yicha 6% dan yuqori qismi (5 foiz punktigacha) davlat tomonidan qoplanadi; 1 yil, keyin yana 2 yil.",a:"PF-71, PF-176 (26.09.2025) tahririda",u:"https://lex.uz/docs/6908350",c:"Uskuna mato, trikotaj yoki bo'yash uchun; bank orqali.",k:"TST, GIT.",v:"Kredit shartnomasi va foiz to'lovlari hisobotini yuritish; kompensatsiya tushumini buxgalteriyada aks ettirish.",m:"Lizing va o'rta korxonalarga tatbiqi tasdiqlash kerak."},
+{n:30,cat:"moliya",co:["TST"],t:"Tadbirkorlikni rivojlantirish kompaniyasi (PF-193)",s:"Ipoteka 10 mlrd so'mgacha, ulush, 75% gacha kafolat",b:"O'rta korxonalar uchun: loyiha qiymatining 15% i miqdorida ulush (3 mlrd so'mgacha), 7 yil ichida qaytarib sotib olinadi; ko'chmas mulk yoki uskuna qiymatining 70% igacha ipoteka krediti, 10 mlrd so'mgacha, 7 yilga, asosiy stavka + 4 punkt; 5 mlrd so'mgacha kredit yoki lizing; kredit kafolati 50%, 5 mlrd so'mgacha (PF-175 bo'yicha 75%, 10 mlrd gacha); lizing kafolati 30%, 1,5 mlrd gacha.",a:"PF-193, 1-ilova",u:"https://lex.uz/docs/-6658633",c:"Ulush va ipoteka uchun — 24 oydan ortiq faoliyat va kamida 50 doimiy ish o'rni; kafolat — yaxshi kredit tarixi; faqat yangi mablag' uchun.",k:"TST — ehtimol; GIT — ishga tushmaguncha yo'q.",v:"TST xodimlar soni va kredit byurosidagi tarixni tekshirish; ipoteka uchun garov mulklar ro'yxati va qiymati.",m:"lex.uz da tekshirilgan."},
+{n:31,cat:"moliya",co:["TST"],t:"PF-176: ishlab chiqarish loyihalariga kredit",s:"Ishlab chiqarish loyihasiga 10 mlrd so'mgacha kredit",b:"Ishlab chiqarish loyihalariga 10 mlrd so'mgacha bank krediti (so'm yoki valyutada).",a:"PF-176, 26.09.2025",u:"https://www.spot.uz/oz/2025/09/29/business-guarantee/",c:"Kamida 1 yil faoliyat, kamida 5 yangi ish o'rni.",k:"TST — mumkin.",v:"Loyiha bo'yicha yangi ish o'rinlari hisobini tayyorlash.",m:"Ikkilamchi manba."},
+{n:32,cat:"moliya",co:["TST"],t:"PF-175: KOB kreditlari va eksport krediti kompensatsiyasi",s:"KOB krediti ~12%, eksport krediti foizi kompensatsiyasi",b:"5 mlrd so'mgacha kredit asosiy stavka minus 2 punktda (~12%); eksportchilarga 3 mln dollargacha, kamida 12 oylik valyuta krediti bo'yicha foiz kompensatsiyasi; davlat xaridlari kafolati 2,5 mlrd gacha.",a:"PF-175, 27.08.2026",u:"https://www.spot.uz/oz/2026/09/01/loans-expansion/",c:"Oxirgi 2 yilning har birida sof foyda; soliq va kredit to'lovlari o'z vaqtida; ish o'rinlari saqlangan; eksport kompensatsiyasi uchun eksportchi bo'lish shart. «35%» ifodasini lex.uz da tekshirish kerak.",k:"TST (foydali bo'lsa); GIT — yo'q.",v:"TST ning 2024 va 2025 yillar sof foydasini tasdiqlash; o'z nomidan eksport hajmini hisoblash.",m:"Ikkilamchi manba."},
+{n:33,cat:"moliya",co:["TST","GIT"],t:"Xalqaro kredit liniyalari (NBU, SQB, EBRD GEFF)",s:"NBU, SQB, EBRD liniyalari (7 yilgacha)",b:"NBU — Jahon banki liniyasi: asosiy vositalar 2 mln dollargacha, aylanma mablag' 250 ming gacha, 7 yil, 24 oy imtiyozli davr; Xitoy taraqqiyot banki yuan liniyasi 7,5–8%, 3 yil (Xitoy dastgohlari uchun). SQB — EBRD 2 mln gacha SOFR + 2,5–3,5%; OPEC jamg'armasi 3 mln gacha; Yevropa eksport-kredit liniyalari EURIBOR + 0,5–2%, 10 yilgacha. EBRD GEFF II — Hamkorbank, Ipak Yo'li, Ipoteka-bank orqali energiya tejovchi uskunaga.",a:"Bank saytlari",u:"https://nbu.uz/en/small-business/foreign-credit-lines",c:"NBU garovi kamida 125%; Yevropa liniyalari uchun loyiha kamida 1–4 mln yevro; GEFF uskunasi texnik tekshiruvdan o'tishi kerak.",k:"TST — ehtimol; GIT — mumkin.",v:"Garov qiymati va kredit tarixini tayyorlash; banklardan yozma shartlar olish.",m:"Bank saytlari (ikkilamchi)."},
+{n:34,cat:"moliya",co:["GIT"],t:"Lizing",s:"Lizing: SQB 18% dan, 7 yilgacha",b:"SQB — kamida 18%, 1–7 yil, aktiv qiymatining 40–45% i miqdorida ta'minot; BRB — so'mda 26,5%, 5 yilgacha. Tadbirkorlikni rivojlantirish kompaniyasi lizing kafolati (30-chora).",a:"Bank tariflari",u:"https://sqb.uz/en/business/leasing-operations/",c:"Bank kredit tasdig'i.",k:"GIT dastgohlari.",v:"Lizing va kreditni solishtirish (QQS, foiz, kafolat); 6-chora (import QQS imtiyozi) lizingda saqlanishini tekshirish.",m:"Bank saytlari."},
+{n:35,cat:"moliya",co:["GIT","Mirshikor"],t:"Kichik biznes paketi (2026 yil iyun)",s:"Kichik biznes: 300 mln so'mgacha grant",b:"200 mln so'mgacha garovsiz mikrokredit; raqamlashtirish, standartlar va yashil texnologiya uchun 300 mln so'mgacha grant (yiliga 100 ta korxona); kredit yoki lizing foizini kompensatsiya qilish.",a:"Prezident hujjati, 2026 yil iyun",u:"https://www.spot.uz/oz/2026/06/02/loans-extension/",c:"Kichik biznes, yaxshi kredit tarixi; grant oluvchilar ro'yxati har yili may oyida.",k:"GIT yoki Mirshikor — yuridik jihatdan kichik bo'lsa.",v:"Korxona toifasini aniqlash.",m:"Ikkilamchi manba."},
+{n:36,cat:"eksport",imp:1,co:["TST"],t:"Qayta ishlash bojxona rejimi (IM-51)",s:"Olib kirilgan bo'z qayta ishlanib eksport qilinsa — boj va QQSsiz",b:"Chetdan olib kirilgan xomashyo (bo'z, bo'yoq) qayta ishlanib, tayyor mahsulot eksport qilinsa, bojxona boji va import QQSsiz kiradi. Umumiy ruxsatnoma 2 yilgacha beriladi.",a:"Bojxona kodeksi 70–80-moddalar; PF-115 (25.04.2022)",u:"",c:"Bojxona ruxsatnomasi; mahsulot chiqish me'yorlari; tayyor matoda xomashyoni aniqlash mumkinligi; to'lovlar uchun ta'minot; ruxsatnoma muddati ichida eksport; har chorak hisobot.",k:"TST (turkman bo'zi, import bo'yoqlar).",v:"Me'yorlarni hisoblash (1 metr mato uchun bo'z va bo'yoq sarfi); IM-51 bo'yicha alohida hisob yuritish; har chorak bojxonaga hisobot.",m:"Birinchi importdan oldin; broker bilan tekshirish."},
+{n:37,cat:"eksport",co:["TST"],t:"O'zbekiston–Turkmaniston erkin savdosi (PQ-29)",s:"Turkmanistondan import 0% boj (CT-1 bilan)",b:"25.02.2025 dan Turkmanistonda ishlab chiqarilgan tovarlarga 0% bojxona boji.",a:"PQ-29, 27.01.2025",u:"https://lex.uz/ru/docs/7341903",c:"CT-1 kelib chiqish sertifikati; istisnolar ro'yxati e'lon qilinmagan — HS 5208 unda yo'qligini broker tasdiqlashi kerak. Import QQS 12% to'lanadi va qaytariladi, IM-51 da esa 0%.",k:"TST.",v:"Shartnoma, invoys, to'lov va bojxona qiymati bir xil narxda bo'lishini nazorat qilish (Turkman birjasidagi $0,41 narx muammosi); import QQSni hisobga olish.",m:"lex.uz da tekshirilgan; istisnolar tasdiqlash kerak."},
+{n:38,cat:"eksport",co:["TST","GIT"],t:"Bojsiz xomashyo va ehtiyot qismlar ro'yxati",s:"Ehtiyot qismlar va ayrim bo'yoqlar bojsiz (01.01.2027 gacha)",b:"O'zbekistonda ishlab chiqarilmaydigan sintetik matolar, ayrim bo'yovchi moddalar (3206190000), bo'yoqlar, siyohlar, yelim va ehtiyot qismlar 0% boj bilan kiradi.",a:"PF-71; PF-4 2-ilova",u:"https://lex.uz/uz/docs/-7994710",c:"Reaktiv va dispers bo'yoqlar (3204), yordamchi kimyoviy moddalar (3402, 3809) va paxta matosi (5208/5209) ro'yxatda yo'q. 01.01.2027 gacha.",k:"TST; GIT ehtiyot qismlari.",v:"Kerakli ehtiyot qismlar importini 2026 yil oxirigacha rejalashtirish; deklaratsiyada ro'yxatdagi HS kodini ko'rsatish.",m:"Ro'yxat lex.uz da tekshirilgan."},
+{n:39,cat:"eksport",co:["TST"],t:"Bojxona to'lovlarini kechiktirish",s:"Bojxona to'lovlarini 60–90 kunga kechiktirish",b:"60 kungacha kechiktirish; eksport mahsuloti ishlab chiqaruvchilariga import QQS bo'yicha 90 kungacha.",a:"Bojxona kodeksi 329–339-moddalar",u:"https://buxgalter.uz/ru/publish/doc/text170391_kak_poluchit_otsrochku_po_tamojennym_platejam",c:"Ta'minot (depozit, garov, bank kafolati, sug'urta yoki kafillik); foiz Markaziy bank stavkasining yarmi; bojxona 5 ish kunida hal qiladi.",k:"TST (bo'yoq va kimyo importi).",v:"Import rejasini tuzish va ta'minot turini tanlash.",m:"Ikkilamchi manba (2021) — joriy matnni tekshirish."},
+{n:40,cat:"eksport",co:["TST"],t:"Vakolatli iqtisodiy operator",s:"Tez rasmiylashtirish, Rossiyada ham tan olinadi",b:"Ustuvor rasmiylashtirish; eksport yukiga o'z plombasini qo'yish; tranzit ta'minotsiz; 50% ta'minot bilan chiqarish va 20 ish kunigacha to'lash. Rossiya bilan o'zaro tan olish 01.06.2025 dan.",a:"Bojxona kodeksi 7¹-modda; VMQ-500",u:"https://www.spot.uz/ru/2025/05/29/russia-customs/",c:"VMQ-500 mezonlari; faqat deklarant foydalanadi.",k:"TST — o'z nomidan import yoki eksport qilsa; hozir eksport deklaranti Orient Home.",v:"Mezonlarni o'rganish va TST mos kelishini baholash.",m:"Ikkilamchi manba."},
+{n:41,cat:"eksport",co:["TST","Mirshikor"],t:"Eksport boji (PF-47)",s:"Tayyor paxta matosiga eksport boji topilmadi (tasdiqlash kerak)",b:"86 turdagi tovarga eksport boji (paxta ipi, trikotaj polotno va boshqalar); paxta tolasi strategik xomashyo, eksporti cheklangan. To'qilgan paxta matosi ro'yxatda nomlanmagan.",a:"PF-47, 14.03.2025 (01.07.2025 dan)",u:"",c:"Ilova ro'yxati o'qilmagan.",k:"TST — tayyor matoga boj topilmadi; Mirshikor — tola eksporti cheklangan.",v:"Ilova ro'yxatini (HS 5208, 5209) broker orqali tasdiqlash.",m:"Ikkilamchi manba."},
+{n:42,cat:"eksport",imp:1,co:["TST"],t:"MDH erkin savdosi: Rossiyaga 0% boj (ST-1)",s:"Rossiyaga 0% boj — ST-1 bilan (o'zimizda to'qilgan matoga)",b:"ST-1 sertifikati bilan Rossiyada 0% import boji.",a:"MDH kelib chiqish qoidalari (20.11.2009)",u:"https://www.alta.ru/tamdoc/09b00003/",c:"Kelib chiqish uchun HS sarlavhasi (4 belgi) o'zgarishi yoki ro'yxatdagi operatsiya kerak. «Bo'yash» kelib chiqish bermaydigan operatsiyalar ro'yxatida, shuning uchun import bo'zdan bo'yalgan matoga ST-1 rad etilishi mumkin.",k:"TST — O'zbekistonda to'qilgan bo'zdan matoga; turkman bo'zi — xavf.",v:"Savdo-sanoat palatasi Namangan bo'limidan turkman bo'zi bo'yicha yozma javob olish; har bir yuk uchun xomashyo kelib chiqish hujjatlarini saqlash.",m:"Birinchi turkman yukidan oldin; ikkilamchi manba."},
+{n:43,cat:"eksport",co:["TST","GIT"],t:"Yevropa Ittifoqi GSP+",s:"Yevropaga 0% boj — GIT to'qib, TST bo'yasa",b:"Yevropaga ko'p tovarlar 0% boj bilan kiradi; bu mato uchun odatiy boj taxminan 8%.",a:"EI GSP+ (O'zbekiston 10.04.2021 dan)",u:"https://gsphub.eu/country-info/Uzbekistan",c:"Kelib chiqish uchun to'qish va bo'yash ikkalasi O'zbekistonda bo'lishi kerak; eksportchi REX tizimida ro'yxatdan o'tadi.",k:"GIT to'qib, TST bo'yagan mato; import bo'zdan bo'yalgan mato — ehtimol yo'q.",v:"Polsha va Yevropaga sotuv kengaysa, REX tartibini o'rganish.",m:"Ikkilamchi manba."},
+{n:44,cat:"eksport",co:["TST"],t:"Eksport tushumi: 180 kun (VMQ-283)",s:"Eksport tushumi 180 kun ichida — jarimadan saqlanish",b:"Majburiyat: valyuta tushumi eksport deklaratsiyasidan 180 kun ichida kelishi kerak. Kechiksa jarima: 180 kungacha 10%, 180–365 kun 20%, 365 kundan ortiq 70%. 2025 yildagi moratoriy tugagan bo'lishi mumkin.",a:"VMQ-283, 14.05.2020",u:"https://buxgalter.uz/ru/publish/doc/text160297_shtrafy_chto_izmenitsya_dlya_importerov_i_eksporterov",c:"30 bank kunidan (KOB uchun 60) ko'p kechiksa jarima.",k:"Eksportchi — hozir Orient Home; TST o'zi eksport qilsa, TST.",v:"Har bir yuk bo'yicha jadval: deklaratsiya sanasi, summa, tushum sanasi; 150-kunda ogohlantirish.",m:"Har oy; ikkilamchi manba."},
+{n:45,cat:"eksport",imp:1,due:"2026-10-31",co:["TST","GIT"],t:"Yengil sanoat jamg'armasi grantlari",s:"Sertifikat, ko'rgazma, maslahatchi, lean, xorijdagi savdo uyi xarajatlari",b:"Quyidagi xarajatlarning bir qismini qoplaydi: ISO, OEKO-TEX, GOTS sertifikatlash va laboratoriya sinovlari; ko'rgazma; eksport sug'urtasi mukofoti; marketpleys va raqamli reklama; xorijdagi savdo uyi ijarasi; xorijiy maslahatchi va dizaynerlar; MHXS (IFRS); xorijda tovar belgisi; logistika; brendlarni jalb qilish; xodimlarni o'qitish; lean ishlab chiqarish (o'rta va yirik korxonalar, 2026–27).",a:"PF-174; VMQ-729 4-ilova; PF-4 2-band; Agentlik e'loni 21.04.2026",u:"https://gov.uz/ru/adli/news/view/156130",c:"Foiz va limitlar 4-ilova 5-bobida, onlayn e'lon qilinmagan; ariza 7 ish kunida ko'riladi. Eksportga oid xarajatlar faqat eksportchiga qoplanadi.",k:"TST — ehtimol; GIT — qayta ishga tushgach.",v:"Har bir xarajat bo'yicha shartnoma, hisob-faktura va to'lov hujjatlarini alohida papkada yig'ish; Agentlikdan foiz va limitlarni so'rash. Tel.: +998 71 203 77 72 (ichki 411–413, 420).",m:"Yo'nalishlar lex.uz da tekshirilgan; foizlar tasdiqlash kerak."},
+{n:46,cat:"eksport",co:["TST"],t:"Transport kompensatsiyasi va eksport sug'urtasi",s:"Transport xarajatining 50% gacha va eksport sug'urtasi — faqat o'zimiz eksport qilsak",b:"VMQ-618 — qo'shni bo'lmagan davlatlarga transport xarajatining 50% igacha (avtomobilda eksport qiymatining 5% i bilan cheklangan). Savdo-sanoat palatasi jamg'armasi (VMQ-466) — xorijiy ko'rgazma va brend xarajatlarining 50% i, 10 000 dollargacha. O'zbekinvest eksport sug'urtasi (VMQ-477) — mukofotning bir qismini Jamg'arma qoplaydi.",a:"VMQ-618 (04.10.2021); VMQ-466; VMQ-477",u:"https://norma.uz/novoe_v_zakonodatelstve/eksporteram_vozmestyat_transportnye_rashody",c:"01.01.2026 dan Savdoni rivojlantirish jamg'armasi to'qimachilikka Yengil sanoat jamg'armasi qoplaydigan yo'nalishlarda pul bermaydi (PF-4 2-ilova 9-band). Faqat eksportchi va transportni o'zi to'lagan bo'lsa.",k:"TST — faqat o'z nomidan eksport qilsa; hozir Orient Home oladi. Rossiya va Polsha qo'shni emas.",v:"Orient Home orqali va o'zimiz eksport qilganda farqni hisoblash: transport kompensatsiyasi va QQS qaytarishning to'liq ulushi.",m:"2026 holati tasdiqlash kerak."},
+{n:47,cat:"energiya",imp:1,due:"2026-11-01",co:["TST","GIT"],t:"Energiya oldindan to'lovi 15% (PF-175, 8-band)",s:"Energiya oldindan to'lovi 100%→15% (01.11.2026 dan)",b:"01.11.2026 dan elektr va gaz uchun oylik oldindan to'lov 100% o'rniga 15%; iste'mol bo'yicha yozma hisobot bekor qilinadi; shartnomalar elektron. ASKUE bo'lsa, qayta ulash to'lovi (~13,6 mln so'm) olinmaydi.",a:"PF-175, 27.08.2026, 8-band",u:"https://lex.uz/ru/docs/8442719",c:"Masofadan o'chirib-yoqiladigan ASKUE/ASKUG hisoblagichlari; oxirgi 2 oyda to'lov intizomi buzilmagan.",k:"TST; GIT — qayta ishga tushishdan oldin ASKUE o'rnatsa.",v:"Oxirgi 2 oy to'lovlari o'z vaqtida bo'lganini tekshirish; noyabr to'lovini 15% bo'yicha rejalashtirish. Bu chora GIT ning eski elektr qarzini kechirmaydi — uni alohida hisobga olish.",m:"01.11.2026 dan; lex.uz da tekshirilgan."},
+{n:48,cat:"energiya",co:["TST","GIT"],t:"Quyosh stansiyasi uchun 6% kredit (PF-4, 15-band)",s:"Quyosh stansiyasiga 6% kredit, 4 yil",b:"50 mln dollarlik fond; 6% (bank marjasi va Agentlik haqi bilan birga), 4 yilgacha; 2026 yil uchun ajratilgan.",a:"PF-4, 15 va 17-bandlar; VMQ-438 (12.08.2026)",u:"https://lex.uz/ru/docs/7994713",c:"Yengil sanoat korxonasi; bank orqali Agentlik arizasi bilan.",k:"TST, GIT (GIT elektr qarzi muammosini kamaytiradi).",v:"12 oylik elektr iste'moli va to'lovlar statistikasini tayyorlash; kredit to'lovi va tejash jadvalini tuzish.",m:"2026 yil mablag'i; VMQ-438 shartlari o'qilmagan."},
+{n:49,cat:"energiya",co:["TST","GIT","Mirshikor"],t:"Ortiqcha elektrni sotish (PF-4 5-band; VMQ-247)",s:"Ortiqcha elektrni ~880 so'm/kVt·soat ga sotish, 10 yil kafolat",b:"01.01.2026 dan yengil sanoat korxonalari 5 MW gacha ortiqcha elektr sotishi mumkin. 1 MW gacha stansiyadan tarmoq II guruh tarifining 80% ida (~880 so'm/kVt·soat) sotib olishi shart; kamida 10 yil kafolat; keyingi oyning 25-sanasigacha to'lanadi.",a:"VMQ-247, 9 va 13-bandlar; PF-4 5-band",u:"https://lex.uz/ru/docs/6498473",c:"ASKUE hisoblagich; ariza berilgandan keyin 10 ish kunida shartnoma.",k:"TST, GIT, Mirshikor.",v:"Sotilgan elektr daromadini hisobga olish tartibini belgilash.",m:"lex.uz da tekshirilgan."},
+{n:50,cat:"energiya",co:ALL,t:"Quyosh stansiyasi uchun soliq imtiyozlari",s:"Quyosh stansiyasi: 10 yil mol-mulk solig'isiz",b:"0,1 MW va undan katta stansiya 10 yil mol-mulk solig'idan ozod; alohida yer uchastkasidagi stansiya yer solig'idan ham ozod.",a:"Soliq kodeksi 414 va 428-moddalar",u:"https://buxgalter.uz/publish/doc/text197941_kakie_lgoty_mogut_primenyat_kompanii_ustanovivshie_solnechnye_paneli",c:"Tom ustidagi stansiyaga yer solig'i imtiyozi tegishli emas. 100 kVt gacha stansiyalar uchun PQ-57 bo'yicha alohida imtiyoz — tasdiqlash kerak.",k:"Hammasi.",v:"Stansiyani alohida asosiy vosita sifatida hisobga olish; deklaratsiyada imtiyozni qo'llash.",m:"Ikkilamchi manba."},
+{n:51,cat:"energiya",imp:1,due:"2026-10-31",co:["TST"],t:"Eko-keshbek (PF-16; VMQ-85)",s:"Ekologik to'lovlarning 50–70% i qaytariladi",b:"Havo ifloslanishini kuzatish stansiyasi o'rnatilsa — kompensatsiya to'lovlari bo'yicha qarzlar hisobdan chiqariladi va respublika byudjetiga to'langan to'lovlarning 50% igacha 2 yil davomida qaytariladi. Keyingi yil chang-gaz tozalash va mahalliy oqova suv tozalash inshooti o'rnatilsa — 70% gacha.",a:"PF-16 (30.01.2025); VMQ-85 (28.02.2026)",u:"https://buxgalter.uz/publish/doc/text213897_kak_pooshchryat_predpriyatiya_za_perehod_k_ekologicheski_chistomu_proizvodstvu",c:"I–II toifali korxonalar; Ekologiya qo'mitasi xulosasi; ariza Davlat xizmatlari markazi yoki my.gov.uz orqali.",k:"TST (bo'yash sexi).",v:"TST to'lagan kompensatsiya to'lovlari (fund.uznature.uz) va qarzlarini hisoblash; korxonaning ekologik toifasini aniqlash.",m:"Ikkilamchi manba."},
+{n:52,cat:"energiya",co:["TST"],t:"Energiya servis shartnomalari (O'RQ-940)",s:"Qozon va tejamkor uskuna — oldindan pulsiz",b:"Energiya servis kompaniyasi qozon, issiqlikni qayta ishlash yoki chastota o'zgartirgichlarni o'z hisobidan o'rnatadi va tejalgan yoqilg'i hisobidan haq oladi — oldindan pul kerak emas.",a:"O'RQ-940, 11–12-moddalar",u:"https://lex.uz/ru/docs/7052085",c:"Energiya servis shartnomasi tuziladi.",k:"TST (bug' va gaz iste'moli katta).",v:"12 oylik gaz va elektr iste'moli bazasini tayyorlash — tejashni o'lchash uchun asos.",m:"lex.uz da tekshirilgan."},
+{n:53,cat:"xodim",co:["TST","GIT"],t:"Dual ta'lim (PF-209)",s:"Talaba-ishchi maoshining 50% i davlatdan (2027 dan)",b:"01.01.2027 dan ishlab chiqarish va muhandislik yo'nalishidagi talaba-ishchilar maoshining 50% ini davlat to'laydi; o'quv uskunasiga 01.01.2030 gacha 1% boj; korxona reytingi va davlat xaridlarida qo'shimcha ball.",a:"PF-209, 29.09.2026",u:"https://lex.uz/ru/docs/8516570",c:"Maosh kamida 1 MHTEKM (1,36 mln so'm); uch tomonlama shartnoma; 15 talabaga bitta ustoz.",k:"TST; GIT — qayta ishga tushgach.",v:"Talaba-ishchilar uchun alohida ish haqi hisobi va kompensatsiya arizasi; Namangan to'qimachilik instituti bilan shartnoma loyihasida yordam.",m:"01.01.2027 dan."},
+{n:54,cat:"xodim",co:["TST","GIT"],t:"Bandlik jamg'armasi subsidiyalari",s:"Ishga olish va o'qitish uchun subsidiyalar",b:"Kvotadan ortiq ishga olingan har bir ijtimoiy himoyaga muhtoj shaxs uchun 12 oy davomida oyiga 2 BHM; bandlik markazi yuborgan har bir o'quvchi uchun 6 oy davomida oyiga 4 BHM; nogironligi bor xodim uchun moslashtirilgan ish o'rniga 40 BHM gacha; 75 BHM gacha foizsiz qarz; ustoz-murabbiylar sertifikatlash xarajatining 50% i (20 BHM gacha).",a:"Bandlik jamg'armasi qoidalari, 07.05.2026",u:"https://anhor.uz/uzl/news/2026-yilda-qanday/",c:"Ishga olish bandlik markazi orqali; xususiy korxona.",k:"TST; GIT — qayta ishga tushganda.",v:"Ishga olinganlar ro'yxati va toifalarini yuritish; ariza my.gov.uz yoki Yagona milliy mehnat tizimi orqali.",m:"Ikkilamchi manba."},
+{n:55,cat:"xodim",co:["TST","GIT"],t:"Nogironligi bor xodimlarni ishga olish",s:"Nogironligi bor xodim uchun bir martalik 3 MHTEKM",b:"I yoki II guruh nogironligi bor har bir xodim uchun bir martalik 3 MHTEKM (~4,1 mln so'm), bitta korxonaga 500 mln so'mgacha.",a:"VMQ nizomi, 01.07.2025",u:"https://www.spot.uz/ru/2025/07/03/disability-hiring/",c:"Xodim kamida 3 oy ishlagan; maoshi kamida 2 MHTEKM.",k:"TST, GIT.",v:"Mos xodimlarni aniqlash; ariza Ijtimoiy himoya yagona tizimi yoki my.gov.uz orqali (2 ish kunida ko'riladi).",m:"Ikkilamchi manba."},
+{n:56,cat:"xodim",co:["TST","GIT"],t:"ERP, MES va AI xarajatlarining 50% i",s:"ERP/MES/AI xarajatining 50% i, 20 ming $ gacha",b:"ERP, MES, PLM yoki AI tizimlari xarajatining 50% i, 20 000 dollargacha, Yengil sanoat agentligi tavsiyasi bilan.",a:"PF-174, 4-ilova; VMQ-729 1-ilova",u:"https://lex.uz/ru/docs/7737268",c:"Tartib, qaysi xarajatlar va qaysi yetkazib beruvchilar mos kelishi e'lon qilinmagan.",k:"TST; GIT — qayta ishga tushgach.",v:"ERP shartnomasidan oldin Agentlikdan yozma tavsiya olish; xarajat hujjatlarini alohida yig'ish.",m:"Tartib tasdiqlash kerak."},
+{n:57,cat:"mulk",co:["TST","Mirshikor","GIT"],t:"Bino ostidagi yerni xususiylashtirish (O'RQ-728)",s:"Yer mulkka o'tadi — garov va sotuv qiymati oshadi",b:"O'z binolari ostidagi, doimiy foydalanishdagi yoki ijaradagi yerni mulkka sotib olish; garov va sotuv qiymati oshadi; xususiylashtirish huquqi yangi mulk egasiga ham o'tadi.",a:"O'RQ-728 (O'RQ-1109 bilan o'zgartirilgan); VMQ-71",u:"https://lex.uz/ru/docs/5729969",c:"Narx — yer solig'i bazaviy stavkasining karralisi (VMQ-71 4-ilova); yig'im 10% BHM; to'lov 10 ish kunida, bo'lib to'lash yo'q; guvohnoma to'lovdan keyingi kun. Sud ishi, begonalashtirish taqiqi yoki arest bo'lsa, rad etiladi. EIZ yerlari xususiylashtirilmaydi.",k:"TST, Mirshikor — ehtimol; GIT — taqiqlar yechilgach; Ibrat — yo'q.",v:"Har bir uchastka bo'yicha kadastr ma'lumotlari, huquq turi va taqiqlar ro'yxati; my.gov.uz «Yerxususiylashtirish» tizimida narx hisobini olish.",m:"Qonun lex.uz da tekshirilgan; narx tasdiqlash kerak."},
+{n:58,cat:"mulk",co:["GIT"],t:"GIT uchastkasini bo'lish (Yer kodeksi 22-modda)",s:"Uchastkani bo'lib, yuqori qismini alohida sotish",b:"Yuqori qism alohida kadastr raqamli uchastka bo'ladi; xaridor binolar bilan birga yer huquqini oladi. Avval bo'linadi, keyin xususiylashtiriladi.",a:"Yer kodeksi 22-modda",u:"https://lex.uz/ru/docs/152653",c:"Kadastr o'lchovi, yangi raqam, shaharsozlik kelishuvi; MIB taqiqlari ro'yxatdan o'tkazishni to'xtatadi.",k:"GIT.",v:"Asosiy vositalar reyestrida bino va uskunalarni yuqori va pastki qism bo'yicha ajratish (balans qiymati, amortizatsiya).",m:"Amaliy tartib tasdiqlash kerak."},
+{n:59,cat:"mulk",co:["GIT"],t:"Bank orqali sotuvda xaridor imtiyozlari",s:"Bank orqali sotuv: xaridorga QQS va mol-mulk solig'i imtiyozi",b:"Bank balansidagi to'qimachilik mulkini investorga sotish 01.01.2026–01.01.2029 QQSdan ozod; xaridor 6 oy ichida ishlab chiqarishni to'liq tiklasa, 1 yil mol-mulk solig'ini 50% to'laydi. PF-177 bo'yicha bankdan sotib olgan xaridor 12 oy mol-mulk va yer solig'idan ozod.",a:"PF-4 13-band; PF-177",u:"https://lex.uz/ru/docs/7994713",c:"Mulk avval bank balansiga o'tishi kerak (21-chora); GIT o'zi to'g'ridan-to'g'ri sotsa, bu imtiyozlar yo'q.",k:"GIT yuqori qismi xaridori — sotuvda dalil sifatida.",v:"Ikki variant bo'yicha QQS, foyda solig'i va sof tushumni hisoblash (21-chora bilan birga).",m:"01.01.2029 gacha; lex.uz da tekshirilgan."},
+{n:60,cat:"mulk",imp:1,due:"2026-10-31",co:["Ibrat"],t:"Erkin iqtisodiy zona (EIZ) rejimi va Ibrat",s:"EIZ imtiyozlari — Ibrat xaridori yoki kreditor uchun",b:"EIZ ishtirokchisi investitsiya hajmiga qarab 3–10 yil mol-mulk, yer va suv solig'idan ozod; qurilish materiallari, uskuna va eksport uchun xomashyoga boj imtiyozlari; import QQS 120 kungacha kechiktiriladi. PQ-407 (25.12.2023) bilan To'raqo'rg'on tumanidagi «Ibrat» massividan 70 gektar «Namangan» EIZ ga qo'shilgan.",a:"O'RQ-604 (O'RQ-1010 va O'RQ-1122 bilan); PF-41; SK 473-modda; PQ-407",u:"https://lex.uz/ru/docs/4737514",c:"Investitsiya shartnomasi; zona yeri ijarada, xususiylashtirilmaydi; 6 oy ichida investitsiya boshlanmasa, yer qaytarib olinadi (PF-41 5-band), kompensatsiya ko'rsatilmagan; qayta sotilgan ijara huquqi puli davlat jamg'armasiga tushadi.",k:"Ibrat — xaridor yoki kreditor uchun qiymat.",v:"Ibrat hujjatlari: investitsiya shartnomasi, ro'yxatdan o'tgan sana, investitsiya hajmi, ~800 ming dollarlik xarajatlar dalolatnomalari, olingan imtiyozlar va ~60 ming dollarlik qarzlar.",m:"Direksiya bilan shu oy gaplashish kerak."},
+{n:61,cat:"mulk",co:["Ibrat"],t:"Tugallanmagan obyekt kompensatsiyasi (VMQ-803)",s:"Tugallanmagan obyekt uchun kompensatsiya (sanoat zonasi misoli)",b:"Ishtirokchi maqomini yo'qotsa, tugallanmagan obyekt 2 haftada ro'yxatga olinadi, 1 oyda baholanadi va auksionda sotiladi; sobiq investorga baholangan qiymat auksion puli kelgandan 1 kun ichida to'lanadi.",a:"VMQ-803, 19.12.2025",u:"https://lex.uz/uz/docs/-7929290",c:"Faqat sanoat zonalarida, EIZ da emas.",k:"Ibrat — bevosita emas, direksiya bilan muzokarada misol sifatida.",v:"Ibrat xarajatlarini hujjatlar bilan tasdiqlab, baholashga tayyorlash.",m:"lex.uz da tekshirilgan."},
+{n:62,cat:"mulk",co:["Mirshikor"],t:"Paxta: foiz kompensatsiyasi va tayyorlov punkti imtiyozi",s:"Paxta krediti foizi kompensatsiyasi, tayyorlov punkti 50% soliq",b:"Klaster va to'qimachilik korxonalarining paxta xomashyosi sotib olish kreditlari bo'yicha 8% dan yuqori foiz (16% gacha) kompensatsiya qilinadi. Paxta tayyorlov punktlari 01.01.2026–01.01.2028 mol-mulk va yer solig'ini 50% to'laydi. 2026–27 yillarda yanvar–fevral paxta krediti to'lovlari oxirgi 6 oyga teng bo'linadi.",a:"PF-82 (08.05.2026); PF-4 3 va 13-bandlar",u:"https://www.spot.uz/ru/2026/05/12/diesel-subsidy/",c:"Paxta xomashyosi sotib oluvchi klaster yoki to'qimachilik korxonasi; 50% soliq stavkasi Soliq kodeksiga kiritilganini tekshirish kerak.",k:"Mirshikor — ishlasa o'zi uchun, sotilsa xaridor uchun dalil.",v:"Mirshikorning soliq hisobida tayyorlov punkti maqomini tekshirish; sakkizta fermer xo'jaligi bilan solishtirma dalolatnomalar tuzish.",m:"PF-4 lex.uz da tekshirilgan; PF-82 — ikkilamchi manba."},
+{n:63,cat:"mulk",co:["GIT"],t:"Ishlamayotgan korxonalar respublika shtabi",s:"Kredit, aylanma mablag', xomashyo yordami",b:"Tiklanishi mumkin bo'lgan korxonalarga banklar va idoralar orqali kredit, aylanma mablag', infratuzilma va xomashyo; shtab 2 hafta ichida joyga chiqadi.",a:"president.uz, 05.05.2026",u:"https://president.uz/ru/lists/view/9175",c:"Ariza tartibi e'lon qilinmagan; yagona mezon — korxona tiklanishi mumkin.",k:"GIT.",v:"GIT ni qayta ishga tushirish rejasi uchun raqamlar: xarajat, ish o'rinlari, kerakli aylanma mablag'.",m:"Murojaat hokimlik va bank orqali."}
+];
+
+var KEY="tst-imtiyoz-board-v1";
+var storageOk=true;
+function load(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){storageOk=false;return null}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));storageOk=true}catch(e){storageOk=false}
+  document.getElementById("storage-banner").hidden=storageOk}
+function fresh(){var cards={};M.forEach(function(m){cards[m.n]={s:"yangi",ans:"",co:m.co.slice(),owner:"Abdurazzoq",due:m.due||"",imp:!!m.imp,upd:""}});
+  return {v:1,cards:cards,custom:[],order:{}}}
+var state=load();
+if(!state||!state.cards){state=fresh()}
+M.forEach(function(m){if(!state.cards[m.n])state.cards[m.n]={s:"yangi",ans:"",co:m.co.slice(),owner:"Abdurazzoq",due:m.due||"",imp:!!m.imp,upd:""}});
+if(!state.custom)state.custom=[];
+if(!state.order)state.order={};
+
+function byId(id){id=String(id);if(id.charAt(0)==="c"){for(var i=0;i<state.custom.length;i++)if(state.custom[i].id===id)return state.custom[i];return null}
+  for(var j=0;j<M.length;j++)if(String(M[j].n)===id)return M[j];return null}
+function rec(id){id=String(id);if(id.charAt(0)==="c"){var c=byId(id);return c?c.st:null}return state.cards[id]}
+function allIds(){return M.map(function(m){return String(m.n)}).concat(state.custom.map(function(c){return c.id}))}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function fmtDate(d){if(!d)return"";var p=d.split("-");return p.length===3?p[2]+"."+p[1]+"."+p[0]:d}
+function fmtShort(d){if(!d)return"";var p=d.split("-");return p.length===3?p[2]+"."+p[1]:d}
+function daysTo(d){if(!d)return null;var t=new Date(d+"T00:00:00");var n=new Date();n.setHours(0,0,0,0);return Math.round((t-n)/86400000)}
+function now(){var d=new Date();return d.toISOString()}
+function colName(id){for(var i=0;i<COLS.length;i++)if(COLS[i].id===id)return COLS[i].name;return id}
+
+var filt={q:"",co:"",cat:"",imp:false};
+function matches(id){var m=byId(id),r=rec(id);if(!m||!r)return false;
+  if(filt.co&&r.co.indexOf(filt.co)<0)return false;
+  var cat=m.cat||"boshqa";if(filt.cat&&cat!==filt.cat)return false;
+  if(filt.imp&&!r.imp)return false;
+  if(filt.q){var q=filt.q.toLowerCase();var hay=[m.n!=null?"#"+m.n+" "+m.n:"",m.t,m.s,m.b||"",m.a||"",m.k||"",r.ans||""].join(" ").toLowerCase();if(hay.indexOf(q)<0)return false}
+  return true}
+
+function orderedIds(colId){var ids=allIds().filter(function(id){var r=rec(id);return r&&r.s===colId});
+  var ord=state.order[colId]||[];var pos={};ord.forEach(function(id,i){pos[id]=i});
+  ids.sort(function(a,b){var pa=pos[a],pb=pos[b];if(pa!=null&&pb!=null)return pa-pb;if(pa!=null)return -1;if(pb!=null)return 1;
+    var ma=byId(a),mb=byId(b);var na=ma.n!=null?ma.n:1000,nb=mb.n!=null?mb.n:1000;return na-nb});
+  return ids}
+
+function cardEl(id){var m=byId(id),r=rec(id);var a=el("article","card");a.dataset.id=id;a.tabIndex=0;a.setAttribute("role","button");
+  a.setAttribute("aria-label",(m.n!=null?"№"+m.n+" ":"")+m.t);
+  var top=el("div","card-top");top.appendChild(el("span","num",m.n!=null?"№"+m.n:"+"));top.appendChild(el("span","cat",CATS[m.cat||"boshqa"]));
+  if(r.imp)top.appendChild(el("span","imp","Muhim"));a.appendChild(top);
+  a.appendChild(el("h3",null,m.t));if(m.s)a.appendChild(el("p","short",m.s));
+  var f=el("div","card-foot");r.co.forEach(function(c){f.appendChild(el("span","tag",c))});
+  if(r.ans&&r.ans.trim())f.appendChild(el("span","has-note","Izoh bor"));
+  if(r.due){var dd=daysTo(r.due);var d=el("span","due"+(dd!=null&&dd<=14&&r.s!=="bajarildi"&&r.s!=="mosemas"?" soon":""),fmtShort(r.due));d.title="Muddat: "+fmtDate(r.due);f.appendChild(d)}
+  a.appendChild(f);
+  a.addEventListener("click",function(){if(dragging)return;openDrawer(id)});
+  a.addEventListener("keydown",function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();openDrawer(id)}});
+  return a}
+
+var board=document.getElementById("board");var lists={};var dragging=false;
+function buildBoard(){board.textContent="";COLS.forEach(function(c){var col=el("section","col");col.setAttribute("aria-label",c.name);
+  var h=el("div","col-head");var t=el("div","col-title");var dot=el("span","dot");dot.style.color=c.color;t.appendChild(dot);t.appendChild(el("span",null,c.name));
+  var cnt=el("span","count","0");cnt.id="cnt-"+c.id;t.appendChild(cnt);h.appendChild(t);h.appendChild(el("div","col-sub",c.sub));col.appendChild(h);
+  var l=el("div","list");l.dataset.col=c.id;lists[c.id]=l;col.appendChild(l);board.appendChild(col)});
+  if(window.Sortable){COLS.forEach(function(c){window.Sortable.create(lists[c.id],{group:"board",animation:150,delay:180,delayOnTouchOnly:true,
+    filter:".empty",draggable:".card",ghostClass:"sortable-ghost",chosenClass:"sortable-chosen",
+    onStart:function(){dragging=true},
+    onEnd:function(ev){var id=ev.item.dataset.id;var to=ev.to.dataset.col;var r=rec(id);
+      if(r&&r.s!==to){r.s=to;r.upd=now();toast("№"+(byId(id).n!=null?byId(id).n:"")+" → "+colName(to))}
+      [ev.from.dataset.col,to].forEach(function(cid){state.order[cid]=Array.prototype.map.call(lists[cid].querySelectorAll(".card"),function(x){return x.dataset.id})});
+      persist();setTimeout(function(){dragging=false;render()},0)}})})}
+}
+function render(){var counts={};COLS.forEach(function(c){var l=lists[c.id];l.textContent="";var ids=orderedIds(c.id);counts[c.id]=ids.length;var shown=0;
+  ids.forEach(function(id){if(matches(id)){l.appendChild(cardEl(id));shown++}});
+  if(!shown){var e=el("div","empty",ids.length?"Filtr bo'yicha karta yo'q":"Kartani shu yerga sudrab olib keling");l.appendChild(e)}
+  var cnt=document.getElementById("cnt-"+c.id);cnt.textContent=(shown===ids.length?ids.length:shown+"/"+ids.length)});
+  renderStats(counts)}
+function renderStats(counts){var s=document.getElementById("stats");s.textContent="";var total=allIds().length;
+  COLS.forEach(function(c){var b=el("button","stat");b.type="button";var d=el("span","dot");d.style.color=c.color;b.appendChild(d);
+    b.appendChild(document.createTextNode(c.name+" "));var n=el("b",null,String(counts[c.id]||0));b.appendChild(n);
+    b.addEventListener("click",function(){var col=lists[c.id].parentNode;col.scrollIntoView({behavior:"smooth",inline:"start",block:"nearest"})});s.appendChild(b)});
+  var reviewed=total-(counts.yangi||0);var p=el("span","stat");p.style.cursor="default";p.appendChild(document.createTextNode("Ko'rib chiqildi "));p.appendChild(el("b",null,reviewed+"/"+total));s.appendChild(p);
+  var soon=allIds().filter(function(id){var r=rec(id);var d=daysTo(r.due);return r.due&&d!=null&&d<=14&&r.s!=="bajarildi"&&r.s!=="mosemas"}).length;
+  if(soon){var w=el("span","stat");w.style.cursor="default";w.style.color="var(--st-mosemas)";w.appendChild(document.createTextNode("Muddati 14 kun ichida "));w.appendChild(el("b",null,String(soon)));s.appendChild(w)}}
+
+/* filters */
+var catSel=document.getElementById("cat-filter");
+(function(){var o=el("option",null,"Barcha yo'nalishlar");o.value="";catSel.appendChild(o);Object.keys(CATS).forEach(function(k){var x=el("option",null,CATS[k]);x.value=k;catSel.appendChild(x)})})();
+catSel.addEventListener("change",function(){filt.cat=catSel.value;savePrefs();render()});
+document.getElementById("q").addEventListener("input",function(e){filt.q=e.target.value.trim();render()});
+document.getElementById("imp-only").addEventListener("change",function(e){filt.imp=e.target.checked;savePrefs();render()});
+Array.prototype.forEach.call(document.querySelectorAll("#co-filter button"),function(b){b.addEventListener("click",function(){filt.co=b.dataset.co;
+  Array.prototype.forEach.call(document.querySelectorAll("#co-filter button"),function(x){x.setAttribute("aria-pressed",String(x===b))});savePrefs();render()})});
+function savePrefs(){try{localStorage.setItem(KEY+"-prefs",JSON.stringify({co:filt.co,cat:filt.cat,imp:filt.imp}))}catch(e){}}
+(function(){try{var p=JSON.parse(localStorage.getItem(KEY+"-prefs")||"null");if(p){filt.co=p.co||"";filt.cat=p.cat||"";filt.imp=!!p.imp;catSel.value=filt.cat;document.getElementById("imp-only").checked=filt.imp;
+  Array.prototype.forEach.call(document.querySelectorAll("#co-filter button"),function(x){x.setAttribute("aria-pressed",String(x.dataset.co===filt.co))})}}catch(e){}})();
+
+/* drawer */
+var overlay=document.getElementById("overlay"),drawer=document.getElementById("drawer"),dBody=document.getElementById("d-body");var openId=null;var lastFocus=null;
+function openDrawer(id){openId=String(id);lastFocus=document.activeElement;var m=byId(id),r=rec(id);
+  var meta=document.getElementById("d-meta");meta.textContent="";meta.appendChild(el("span","num",m.n!=null?"№"+m.n:"Qo'shilgan vazifa"));meta.appendChild(el("span","cat",CATS[m.cat||"boshqa"]));
+  if(r.upd)meta.appendChild(el("span",null,"O'zgartirildi: "+fmtDate(r.upd.slice(0,10))));
+  document.getElementById("d-title").textContent=m.t;dBody.textContent="";
+  var lb=el("div");lb.appendChild(el("p","lbl","Holat — bosib o'tkazing"));var sr=el("div","status-row");
+  COLS.forEach(function(c){var b=el("button");b.type="button";var d=el("span","dot");d.style.color=c.color;b.appendChild(d);b.appendChild(document.createTextNode(c.name));
+    b.style.color="";b.setAttribute("aria-pressed",String(r.s===c.id));if(r.s===c.id)b.style.color=c.color;
+    b.addEventListener("click",function(){if(r.s!==c.id){r.s=c.id;r.upd=now();var o=state.order[c.id]||[];o=o.filter(function(x){return x!==openId});o.push(openId);state.order[c.id]=o;persist();render();toast((m.n!=null?"№"+m.n+" → ":"")+c.name)}
+      Array.prototype.forEach.call(sr.children,function(x,i){x.setAttribute("aria-pressed",String(COLS[i].id===c.id));x.style.color=COLS[i].id===c.id?COLS[i].color:""})});
+    sr.appendChild(b)});lb.appendChild(sr);dBody.appendChild(lb);
+  var ed=el("div","edit");
+  var la=el("label");la.style.display="flex";la.style.flexDirection="column";la.style.gap="4px";var lt=el("span","lbl","Javob / izoh");la.appendChild(lt);
+  var ta=el("textarea");ta.id="ans";ta.placeholder="Masalan: tekshirdim, TST ga to'g'ri keladi, 70% sharti bajarilgan. Soliq idorasiga xat 14.10 da yuborildi.";ta.value=r.ans||"";la.appendChild(ta);ed.appendChild(la);
+  var cl=el("div");cl.appendChild(el("p","lbl","Qaysi korxonaga tegishli"));var cos=el("div","cos");
+  COS.forEach(function(c){var l=el("label","check");var cb=el("input");cb.type="checkbox";cb.checked=r.co.indexOf(c)>=0;cb.id="co-"+c;
+    cb.addEventListener("change",function(){r.co=COS.filter(function(x){return document.getElementById("co-"+x).checked});touch()});l.appendChild(cb);l.appendChild(document.createTextNode(c));cos.appendChild(l)});
+  cl.appendChild(cos);ed.appendChild(cl);
+  var two=el("div","two");var l1=el("label",null,"Mas'ul");var ow=el("input");ow.type="text";ow.id="owner";ow.value=r.owner||"";ow.setAttribute("list","people");l1.appendChild(ow);
+  var l2=el("label",null,"Muddat");var du=el("input");du.type="date";du.id="due";du.value=r.due||"";l2.appendChild(du);two.appendChild(l1);two.appendChild(l2);ed.appendChild(two);
+  var il=el("label","check");var ic=el("input");ic.type="checkbox";ic.id="imp";ic.checked=!!r.imp;il.appendChild(ic);il.appendChild(document.createTextNode("Muhim deb belgilash"));ed.appendChild(il);
+  var sv=el("div","saved");sv.id="saved";ed.appendChild(sv);dBody.appendChild(ed);
+  var tmr=null;function touch(){r.upd=now();persist();sv.textContent="Saqlandi";clearTimeout(tmr);tmr=setTimeout(function(){sv.textContent=""},1500);render()}
+  var tt=null;ta.addEventListener("input",function(){r.ans=ta.value;clearTimeout(tt);tt=setTimeout(touch,400)});
+  ow.addEventListener("change",function(){r.owner=ow.value.trim();touch()});du.addEventListener("change",function(){r.due=du.value;touch()});ic.addEventListener("change",function(){r.imp=ic.checked;touch()});
+  function sec(label,text,url){if(!text)return;var s=el("div","sec");s.appendChild(el("p","lbl",label));var p=el("p");
+    if(url){p.appendChild(document.createTextNode(text+" — "));var a=el("a",null,"matnni ochish");a.href=url;a.target="_blank";a.rel="noopener";p.appendChild(a)}else p.textContent=text;s.appendChild(p);dBody.appendChild(s)}
+  sec("Nima beradi",m.b);sec("Qonuniy asos",m.a,m.u);sec("Shartlar",m.c);sec("Kimga",m.k);sec("Buxgalter vazifasi",m.v);sec("Muddat / ishonchlilik",m.m);
+  if(m.id){var del=el("button","btn danger","Vazifani o'chirish");del.type="button";var conf=false;del.addEventListener("click",function(){if(!conf){conf=true;del.textContent="Yana bir marta bosing — o'chiriladi";return}
+    state.custom=state.custom.filter(function(x){return x.id!==m.id});Object.keys(state.order).forEach(function(k){state.order[k]=state.order[k].filter(function(x){return x!==m.id})});persist();closeDrawer();render();toast("O'chirildi")});dBody.appendChild(del)}
+  var dl=el("p","hint");dl.appendChild(document.createTextNode("To'liq tushuntirish: "));var da=el("a",null,"buxgalter uchun qo'llanma");da.href=DOC_URL;da.target="_blank";da.rel="noopener";dl.appendChild(da);dl.appendChild(document.createTextNode(" (havola ulashilgan bo'lsa ochiladi)."));dBody.appendChild(dl);
+  overlay.hidden=false;drawer.hidden=false;dBody.scrollTop=0;document.getElementById("d-close").focus()}
+function closeDrawer(){overlay.hidden=true;drawer.hidden=true;openId=null;if(lastFocus&&lastFocus.focus)try{lastFocus.focus()}catch(e){}}
+document.getElementById("d-close").addEventListener("click",closeDrawer);
+overlay.addEventListener("click",function(){closeDrawer();closeModals()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){if(!drawer.hidden)closeDrawer();closeModals()}});
+var dlist=el("datalist");dlist.id="people";["Abdurazzoq","Ahmadxon","Fayzullo oka","Fayzulloh Ruzmatov","Yurist","Bank"].forEach(function(p){var o=el("option");o.value=p;dlist.appendChild(o)});document.body.appendChild(dlist);
+
+/* modals */
+function openModal(id){overlay.hidden=false;var m=document.getElementById(id);m.hidden=false;var f=m.querySelector("textarea,input,button");if(f)f.focus()}
+function closeModals(){Array.prototype.forEach.call(document.querySelectorAll(".modal"),function(m){m.hidden=true});if(drawer.hidden)overlay.hidden=true}
+Array.prototype.forEach.call(document.querySelectorAll("[data-close]"),function(b){b.addEventListener("click",closeModals)});
+function copyText(text,ta){var done=function(){toast("Nusxa olindi")};
+  try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){fallback()});return}}catch(e){}
+  fallback();function fallback(){if(ta){ta.focus();ta.select();toast("Matn belgilandi — nusxa oling (Ctrl+C)")}}}
+
+/* report */
+function reportText(withNotes){var d=new Date();var ds=("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear();
+  var out=["DAVLAT IMTIYOZLARI — HOLAT ("+ds+")",""];var order=["mos","jarayon","bajarildi","organ","mosemas"];
+  order.forEach(function(cid){var ids=orderedIds(cid);if(!ids.length)return;out.push(colName(cid).toUpperCase()+" ("+ids.length+")");
+    ids.forEach(function(id){var m=byId(id),r=rec(id);var line=(m.n!=null?m.n+". ":"• ")+m.t;if(r.co.length)line+=" ["+r.co.join(", ")+"]";if(r.due&&cid!=="bajarildi"&&cid!=="mosemas")line+=" — "+fmtDate(r.due);
+      out.push(line);if(withNotes&&r.ans&&r.ans.trim())out.push("   ↳ "+r.ans.trim().replace(/\s+/g," "))});out.push("")});
+  var ny=orderedIds("yangi").length;out.push("Hali ko'rib chiqilmagan: "+ny+" ta");return out.join("\n")}
+function refreshReport(){var t=reportText(document.getElementById("rep-notes").checked);var ta=document.getElementById("rep-text");ta.value=t;
+  var n=t.length;var c=document.getElementById("rep-count");c.textContent=n+" belgi"+(n>4096?" — Telegram uchun uzun, ikki xabarga bo'lib yuboring":"");c.style.color=n>4096?"var(--st-mosemas)":""}
+document.getElementById("btn-report").addEventListener("click",function(){refreshReport();openModal("m-report")});
+document.getElementById("rep-notes").addEventListener("change",refreshReport);
+document.getElementById("rep-copy").addEventListener("click",function(){var ta=document.getElementById("rep-text");copyText(ta.value,ta)});
+
+/* backup */
+document.getElementById("btn-backup").addEventListener("click",function(){document.getElementById("bk-out").value=JSON.stringify(state);document.getElementById("bk-in").value="";document.getElementById("bk-msg").textContent="";resetConf=false;document.getElementById("bk-reset").textContent="Boshlang'ich holatga qaytarish";openModal("m-backup")});
+document.getElementById("bk-copy").addEventListener("click",function(){var ta=document.getElementById("bk-out");copyText(ta.value,ta)});
+document.getElementById("bk-load").addEventListener("click",function(){var msg=document.getElementById("bk-msg");var raw=document.getElementById("bk-in").value.trim();
+  if(!raw){msg.textContent="Avval zaxira kodini qo'ying.";return}
+  try{var s=JSON.parse(raw);if(!s||typeof s!=="object"||!s.cards)throw new Error("x");
+    Object.keys(s.cards).forEach(function(k){var c=s.cards[k];if(!c||typeof c.s!=="string"||!Array.isArray(c.co))throw new Error("x")});
+    state={v:1,cards:s.cards,custom:Array.isArray(s.custom)?s.custom:[],order:s.order&&typeof s.order==="object"?s.order:{}};
+    M.forEach(function(m){if(!state.cards[m.n])state.cards[m.n]={s:"yangi",ans:"",co:m.co.slice(),owner:"Abdurazzoq",due:m.due||"",imp:!!m.imp,upd:""}});
+    persist();render();closeModals();toast("Taxta yuklandi")}catch(e){msg.textContent="Kod noto'g'ri. Zaxira kodini to'liq, o'zgartirmasdan qo'ying."}});
+var resetConf=false;
+document.getElementById("bk-reset").addEventListener("click",function(){var b=document.getElementById("bk-reset");if(!resetConf){resetConf=true;b.textContent="Yana bosing — barcha javoblar o'chadi";return}
+  state=fresh();persist();render();closeModals();toast("Taxta boshlang'ich holatga qaytdi")});
+
+/* add custom */
+(function(){var box=document.getElementById("add-co");COS.forEach(function(c){var l=el("label","check");var cb=el("input");cb.type="checkbox";cb.id="add-co-"+c;l.appendChild(cb);l.appendChild(document.createTextNode(c));box.appendChild(l)})})();
+document.getElementById("btn-add").addEventListener("click",function(){document.getElementById("add-title").value="";document.getElementById("add-short").value="";document.getElementById("add-due").value="";document.getElementById("add-msg").textContent="";
+  COS.forEach(function(c){document.getElementById("add-co-"+c).checked=false});openModal("m-add")});
+document.getElementById("add-save").addEventListener("click",function(){var t=document.getElementById("add-title").value.trim();if(!t){document.getElementById("add-msg").textContent="Vazifa nomini yozing.";return}
+  var id="c"+Date.now().toString(36);var co=COS.filter(function(c){return document.getElementById("add-co-"+c).checked});
+  state.custom.push({id:id,n:null,cat:"boshqa",t:t,s:document.getElementById("add-short").value.trim(),co:co,st:{s:"yangi",ans:"",co:co,owner:"Abdurazzoq",due:document.getElementById("add-due").value,imp:false,upd:now()}});
+  persist();render();closeModals();toast("Vazifa qo'shildi")});
+
+/* toast */
+var tt=null;function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(tt);tt=setTimeout(function(){t.hidden=true},1800)}
+
+buildBoard();render();persist();
+if(!window.Sortable){var h=document.querySelector(".brand p");h.textContent="TST · GIT · Mirshikor · Ibrat — 63 ta chora. Kartani bosing va holatini tanlang."}
+})();
+</script>
+</body>
+</html>
