@@ -131,6 +131,7 @@ button,input,select,textarea{font:inherit;color:inherit}
       <p>TST · GIT · Mirshikor · Ibrat — 63 ta chora. Kartani sudrab yoki bosib ustunga o'tkazing.</p>
     </div>
     <button class="btn" id="btn-add" type="button">+ Vazifa</button>
+    <button class="btn" id="btn-link" type="button">Havola</button>
     <button class="btn" id="btn-backup" type="button">Zaxira</button>
     <button class="btn primary" id="btn-report" type="button">Hisobot</button>
   </div>
@@ -149,6 +150,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   </div>
 </header>
 <div class="banner" id="storage-banner" hidden>Bu brauzer o'zgarishlarni saqlay olmayapti. Ishni yo'qotmaslik uchun "Zaxira" orqali kodni nusxalab qo'ying.</div>
+<div class="banner" id="wiped-banner" hidden>Oldingi saqlangan holat brauzerdan o'chirilgan edi — havoladagi zaxiradan tiklandi. Buning oldini olish uchun Chrome sozlamasida "Clear cookies and site data when you close all windows" ni O'CHIRING (chrome://settings/cookies). Bu sahifani xatcho'pga (bookmark) qo'shib qo'ying — havola sizning oxirgi holatingizni ham saqlaydi.</div>
 <main class="board" id="board" aria-label="Imtiyozlar taxtasi"></main>
 
 <div class="overlay" id="overlay" hidden></div>
@@ -283,11 +285,26 @@ var M=[
 
 var KEY="tst-imtiyoz-board-v1";
 var storageOk=true;
-function load(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null}catch(e){storageOk=false;return null}}
+function enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))))}catch(e){return ""}}
+function dec(s){try{return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}
+function fromHash(){var h=location.hash||"";var i=h.indexOf("d=");if(i<0)return null;return dec(h.slice(i+2))}
+function toHash(){var c=enc(state);if(c)try{history.replaceState(null,"","#d="+c)}catch(e){location.hash="d="+c}}
+function load(){
+  var ls=null;try{var r=localStorage.getItem(KEY);ls=r?JSON.parse(r):null}catch(e){storageOk=false}
+  var hs=fromHash();
+  // Pick the newer of localStorage vs the link-embedded state (whichever was saved last).
+  function ts(o){if(!o||!o.cards)return 0;var m=0;for(var k in o.cards){var u=o.cards[k]&&o.cards[k].upd;if(u&&u>m)m=u}return m}
+  if(ls&&hs)return ts(hs)>ts(ls)?hs:ls;
+  return ls||hs||null;}
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));storageOk=true}catch(e){storageOk=false}
+  toHash();
   document.getElementById("storage-banner").hidden=storageOk}
 function fresh(){var cards={};M.forEach(function(m){cards[m.n]={s:"yangi",ans:"",co:m.co.slice(),owner:"Abdurazzoq",due:m.due||"",imp:!!m.imp,upd:""}});
   return {v:1,cards:cards,custom:[],order:{}}}
+// Persistence self-test: did a previous session's save survive to this load?
+try{var MARK="tst-imtiyoz-mark";var hadMark=localStorage.getItem(MARK);localStorage.setItem(MARK,String(Date.now()));
+  var hadState=null;try{hadState=localStorage.getItem(KEY)}catch(e){}
+  window.__storageWiped=(hadMark&&!hadState);}catch(e){window.__storageWiped=false}
 var state=load();
 if(!state||!state.cards){state=fresh()}
 M.forEach(function(m){if(!state.cards[m.n])state.cards[m.n]={s:"yangi",ans:"",co:m.co.slice(),owner:"Abdurazzoq",due:m.due||"",imp:!!m.imp,upd:""}});
@@ -431,6 +448,7 @@ document.getElementById("rep-notes").addEventListener("change",refreshReport);
 document.getElementById("rep-copy").addEventListener("click",function(){var ta=document.getElementById("rep-text");copyText(ta.value,ta)});
 
 /* backup */
+document.getElementById("btn-link").addEventListener("click",function(){toHash();var url=location.href;copyText(url);toast("Havola nusxalandi — xatcho'pga qo'ying yoki yuboring")});
 document.getElementById("btn-backup").addEventListener("click",function(){document.getElementById("bk-out").value=JSON.stringify(state);document.getElementById("bk-in").value="";document.getElementById("bk-msg").textContent="";resetConf=false;document.getElementById("bk-reset").textContent="Boshlang'ich holatga qaytarish";openModal("m-backup")});
 document.getElementById("bk-copy").addEventListener("click",function(){var ta=document.getElementById("bk-out");copyText(ta.value,ta)});
 document.getElementById("bk-load").addEventListener("click",function(){var msg=document.getElementById("bk-msg");var raw=document.getElementById("bk-in").value.trim();
@@ -457,6 +475,7 @@ document.getElementById("add-save").addEventListener("click",function(){var t=do
 var tt=null;function toast(msg){var t=document.getElementById("toast");t.textContent=msg;t.hidden=false;clearTimeout(tt);tt=setTimeout(function(){t.hidden=true},1800)}
 
 buildBoard();render();persist();
+if(window.__storageWiped){document.getElementById("wiped-banner").hidden=false}
 if(!window.Sortable){var h=document.querySelector(".brand p");h.textContent="TST · GIT · Mirshikor · Ibrat — 63 ta chora. Kartani bosing va holatini tanlang."}
 })();
 </script>
