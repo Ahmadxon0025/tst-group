@@ -305,7 +305,7 @@ function setSync(t){var e=document.getElementById("sync-note");if(e)e.textConten
 function enc(o){try{return btoa(unescape(encodeURIComponent(JSON.stringify(o))))}catch(e){return ""}}
 function dec(s){try{return JSON.parse(decodeURIComponent(escape(atob(s))))}catch(e){return null}}
 function fromHash(){var h=location.hash||"";var i=h.indexOf("d=");if(i<0)return null;return dec(h.slice(i+2))}
-function toHash(){var c=enc(state);if(c)try{history.replaceState(null,"","#d="+c)}catch(e){location.hash="d="+c}}
+function toHash(){if(window.__fbRef)return;var c=enc(state);if(c)try{history.replaceState(null,"","#d="+c)}catch(e){location.hash="d="+c}}
 function load(){
   var ls=null;try{var r=localStorage.getItem(KEY);ls=r?JSON.parse(r):null}catch(e){storageOk=false}
   var hs=fromHash();
@@ -340,6 +340,7 @@ function fbMerge(val){if(!val)return false;var changed=false;
   return changed;}
 function fbInit(){if(!FB||!FB.databaseURL||typeof firebase==="undefined")return;
   try{firebase.initializeApp(FB);var ref=firebase.database().ref("boards/"+ROOM);window.__fbRef=ref;
+    if(/^#d=/.test(location.hash||"")){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}
     setSync("● Birgalikda — ulanmoqda…");
     ref.on("value",function(snap){var v=snap.val();
       if(v){var ch=fbMerge(v);persistLocal();if(ch)render();}
@@ -494,7 +495,7 @@ document.getElementById("rep-notes").addEventListener("change",refreshReport);
 document.getElementById("rep-copy").addEventListener("click",function(){var ta=document.getElementById("rep-text");copyText(ta.value,ta)});
 
 /* backup */
-document.getElementById("btn-link").addEventListener("click",function(){toHash();var url=location.href;copyText(url);toast("Havola nusxalandi — xatcho'pga qo'ying yoki yuboring")});
+document.getElementById("btn-link").addEventListener("click",function(){if(window.__fbRef){var u=location.origin+location.pathname;copyText(u);toast("Havola nusxalandi — jamoaga yuboring")}else{toHash();copyText(location.href);toast("Havola nusxalandi — xatcho'pga qo'ying yoki yuboring")}});
 document.getElementById("btn-backup").addEventListener("click",function(){document.getElementById("bk-out").value=JSON.stringify(state);document.getElementById("bk-in").value="";document.getElementById("bk-msg").textContent="";resetConf=false;document.getElementById("bk-reset").textContent="Boshlang'ich holatga qaytarish";openModal("m-backup")});
 document.getElementById("bk-copy").addEventListener("click",function(){var ta=document.getElementById("bk-out");copyText(ta.value,ta)});
 document.getElementById("bk-load").addEventListener("click",function(){var msg=document.getElementById("bk-msg");var raw=document.getElementById("bk-in").value.trim();
