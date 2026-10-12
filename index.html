@@ -291,11 +291,13 @@ var storageOk=true;
 /* === BIRGALIKDA (Firebase) === Firebase konfiguratsiyasini shu yerga qo'ying.
    Bo'sh bo'lsa, taxta oddiy (lokal) rejimda ishlaydi. */
 var FB={
-  apiKey:"",
-  authDomain:"",
-  databaseURL:"",
-  projectId:"",
-  appId:""
+  apiKey:"AIzaSyBKJ6_HQE76FUhB1LPf4wVY2GdVixzm_Xk",
+  authDomain:"tst-board-f2502.firebaseapp.com",
+  databaseURL:"https://tst-board-f2502-default-rtdb.firebaseio.com",
+  projectId:"tst-board-f2502",
+  storageBucket:"tst-board-f2502.firebasestorage.app",
+  messagingSenderId:"42342011946",
+  appId:"1:42342011946:web:36f44016c12ca75cb61f53"
 };
 var ROOM="tst-7c1a9e";
 var lastPush={};
@@ -323,12 +325,14 @@ function fbPush(){var ref=window.__fbRef;if(!ref)return;
   var m={};(state.custom||[]).forEach(function(c){m[c.id]=c});var cj=JSON.stringify(m);
   if(cj!==lastPush.__custom){ref.child("custom").set(m);lastPush.__custom=cj;}
   var oj=JSON.stringify(state.order||{});if(oj!==lastPush.__order){ref.child("order").set(state.order||{});lastPush.__order=oj;}}
+function normCard(r){r=r||{};r.s=typeof r.s==="string"?r.s:"yangi";r.co=Array.isArray(r.co)?r.co:[];r.ans=r.ans||"";r.owner=r.owner||"";r.due=r.due||"";r.imp=!!r.imp;r.upd=r.upd||"";return r;}
+function normCustom(c){c=c||{};c.co=Array.isArray(c.co)?c.co:[];c.st=c.st||{};c.st=normCard(c.st);return c;}
 function fbMerge(val){if(!val)return false;var changed=false;
-  if(val.cards){for(var k in val.cards){var r=val.cards[k];if(!r)continue;var l=state.cards[k];
+  if(val.cards){for(var k in val.cards){var r=val.cards[k];if(!r)continue;r=normCard(r);var l=state.cards[k];
     if(!l){state.cards[k]=r;lastPush[k]=JSON.stringify(r);changed=true;}
     else if((r.upd||"")>(l.upd||"")){state.cards[k]=r;lastPush[k]=JSON.stringify(r);changed=true;}}}
   if(val.custom){var rc=val.custom;var lc=state.custom||[];var byId={};lc.forEach(function(c){byId[c.id]=c});
-    Object.keys(rc).forEach(function(id){var c=rc[id];if(!c)return;var e=byId[id];
+    Object.keys(rc).forEach(function(id){var c=normCustom(rc[id]);if(!c.id)c.id=id;var e=byId[id];
       if(!e){lc.push(c);byId[id]=c;changed=true;}
       else if((((c.st&&c.st.upd)||""))>(((e.st&&e.st.upd)||""))){e.st=c.st;e.co=c.co;e.t=c.t;e.s=c.s;changed=true;}});
     state.custom=lc;var m={};lc.forEach(function(c){m[c.id]=c});lastPush.__custom=JSON.stringify(m);}
@@ -366,7 +370,7 @@ function colName(id){for(var i=0;i<COLS.length;i++)if(COLS[i].id===id)return COL
 
 var filt={q:"",co:"",cat:"",imp:false};
 function matches(id){var m=byId(id),r=rec(id);if(!m||!r)return false;
-  if(filt.co&&r.co.indexOf(filt.co)<0)return false;
+  if(filt.co&&(r.co||[]).indexOf(filt.co)<0)return false;
   var cat=m.cat||"boshqa";if(filt.cat&&cat!==filt.cat)return false;
   if(filt.imp&&!r.imp)return false;
   if(filt.q){var q=filt.q.toLowerCase();var hay=[m.n!=null?"#"+m.n+" "+m.n:"",m.t,m.s,m.b||"",m.a||"",m.k||"",r.ans||""].join(" ").toLowerCase();if(hay.indexOf(q)<0)return false}
@@ -383,7 +387,7 @@ function cardEl(id){var m=byId(id),r=rec(id);var a=el("article","card");a.datase
   var top=el("div","card-top");top.appendChild(el("span","num",m.n!=null?"№"+m.n:"+"));top.appendChild(el("span","cat",CATS[m.cat||"boshqa"]));
   if(r.imp)top.appendChild(el("span","imp","Muhim"));a.appendChild(top);
   a.appendChild(el("h3",null,m.t));if(m.s)a.appendChild(el("p","short",m.s));
-  var f=el("div","card-foot");r.co.forEach(function(c){f.appendChild(el("span","tag",c))});
+  var f=el("div","card-foot");(r.co||[]).forEach(function(c){f.appendChild(el("span","tag",c))});
   if(r.ans&&r.ans.trim())f.appendChild(el("span","has-note","Izoh bor"));
   if(r.due){var dd=daysTo(r.due);var d=el("span","due"+(dd!=null&&dd<=14&&r.s!=="bajarildi"&&r.s!=="mosemas"?" soon":""),fmtShort(r.due));d.title="Muddat: "+fmtDate(r.due);f.appendChild(d)}
   a.appendChild(f);
@@ -445,7 +449,7 @@ function openDrawer(id){openId=String(id);lastFocus=document.activeElement;var m
   var la=el("label");la.style.display="flex";la.style.flexDirection="column";la.style.gap="4px";var lt=el("span","lbl","Javob / izoh");la.appendChild(lt);
   var ta=el("textarea");ta.id="ans";ta.placeholder="Masalan: tekshirdim, TST ga to'g'ri keladi, 70% sharti bajarilgan. Soliq idorasiga xat 14.10 da yuborildi.";ta.value=r.ans||"";la.appendChild(ta);ed.appendChild(la);
   var cl=el("div");cl.appendChild(el("p","lbl","Qaysi korxonaga tegishli"));var cos=el("div","cos");
-  COS.forEach(function(c){var l=el("label","check");var cb=el("input");cb.type="checkbox";cb.checked=r.co.indexOf(c)>=0;cb.id="co-"+c;
+  COS.forEach(function(c){var l=el("label","check");var cb=el("input");cb.type="checkbox";cb.checked=(r.co||[]).indexOf(c)>=0;cb.id="co-"+c;
     cb.addEventListener("change",function(){r.co=COS.filter(function(x){return document.getElementById("co-"+x).checked});touch()});l.appendChild(cb);l.appendChild(document.createTextNode(c));cos.appendChild(l)});
   cl.appendChild(cos);ed.appendChild(cl);
   var two=el("div","two");var l1=el("label",null,"Mas'ul");var ow=el("input");ow.type="text";ow.id="owner";ow.value=r.owner||"";ow.setAttribute("list","people");l1.appendChild(ow);
@@ -480,7 +484,7 @@ function copyText(text,ta){var done=function(){toast("Nusxa olindi")};
 function reportText(withNotes){var d=new Date();var ds=("0"+d.getDate()).slice(-2)+"."+("0"+(d.getMonth()+1)).slice(-2)+"."+d.getFullYear();
   var out=["DAVLAT IMTIYOZLARI — HOLAT ("+ds+")",""];var order=["mos","jarayon","bajarildi","organ","mosemas"];
   order.forEach(function(cid){var ids=orderedIds(cid);if(!ids.length)return;out.push(colName(cid).toUpperCase()+" ("+ids.length+")");
-    ids.forEach(function(id){var m=byId(id),r=rec(id);var line=(m.n!=null?m.n+". ":"• ")+m.t;if(r.co.length)line+=" ["+r.co.join(", ")+"]";if(r.due&&cid!=="bajarildi"&&cid!=="mosemas")line+=" — "+fmtDate(r.due);
+    ids.forEach(function(id){var m=byId(id),r=rec(id);var line=(m.n!=null?m.n+". ":"• ")+m.t;if((r.co||[]).length)line+=" ["+r.co.join(", ")+"]";if(r.due&&cid!=="bajarildi"&&cid!=="mosemas")line+=" — "+fmtDate(r.due);
       out.push(line);if(withNotes&&r.ans&&r.ans.trim())out.push("   ↳ "+r.ans.trim().replace(/\s+/g," "))});out.push("")});
   var ny=orderedIds("yangi").length;out.push("Hali ko'rib chiqilmagan: "+ny+" ta");return out.join("\n")}
 function refreshReport(){var t=reportText(document.getElementById("rep-notes").checked);var ta=document.getElementById("rep-text");ta.value=t;
