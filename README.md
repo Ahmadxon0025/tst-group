@@ -70,6 +70,7 @@ A call-tracking CRM for greige (bo'z) suppliers: 141 active weaving and textile 
 
 - **Moslik (fit):** A = publishes greige/bed-linen fabrics; B = registered cotton-fabric weaver (OKED 13201/13209); C = wool/silk weaver; D = main registered activity is not weaving (ask before ruling out).
 - Each company has a status (Yangi → Qo'ng'iroq qilindi / Javob yo'q → Narx olindi → Namuna / sinov → Ta'minotchi, or Mos emas), call fields (person, price $/m, width, MOQ, payment terms, next call date), notes and a dated history.
-- **Hisobot** builds a Telegram summary; **Zaxira** moves the whole CRM to another device. Progress is saved per browser (`localStorage`, key `tst-crm-taminotchi-v1`).
+- **Shared:** changes sync through the same Firebase database as the board (path `boards/tst-crm-7c1a9e`), one record per company, newest edit wins. Without a connection it keeps working locally (`localStorage`, key `tst-crm-taminotchi-v1`).
+- **Hisobot** builds a Telegram summary; **Zaxira** gives a full backup code.
 - To update the list: edit `suppliers.json`, then run `python3 build_crm.py` to rebuild `crm.html`.
 - Registry phones are often the director's mobile or an old number; confirm on the call.

@@ -104,7 +104,7 @@ textarea{min-height:64px;resize:vertical}
   <div class="row">
     <div class="brand">
       <h1>Bo'z ta'minotchilari — CRM</h1>
-      <p>Namangandan tashqari to'quv korxonalari · reyestr ma'lumotlari 2025–2026 · <a href="./">← Imtiyozlar taxtasi</a></p>
+      <p>Namangandan tashqari to'quv korxonalari · reyestr ma'lumotlari 2025–2026 · <a href="./">← Imtiyozlar taxtasi</a> · <span id="sync"></span></p>
     </div>
     <button class="btn" id="bReport" type="button">Hisobot</button>
     <button class="btn" id="bBackup" type="button">Zaxira</button>
@@ -139,6 +139,8 @@ textarea{min-height:64px;resize:vertical}
 <div class="modal" id="modal" hidden><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script>
 var BASE=__DATA__;
 var STATUSES=[
@@ -155,7 +157,25 @@ var FITT={A:"A · bo'z mos",B:'B · paxta to\'quvchi',C:'C · jun/ipak',D:"D · 
 var KEY='tst-crm-taminotchi-v1';
 var state={rec:{},custom:[]};
 try{var s=localStorage.getItem(KEY);if(s){state=JSON.parse(s);state.rec=state.rec||{};state.custom=state.custom||[]}}catch(e){}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Brauzer saqlashga ruxsat bermadi — Zaxira oling")}}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){toast("Brauzer saqlashga ruxsat bermadi — Zaxira oling")}}
+/* Shared sync: same Firebase project as the imtiyozlar board; per-record writes, newest "upd" wins. */
+var FB={apiKey:"AIzaSyBKJ6_HQE76FUhB1LPf4wVY2GdVixzm_Xk",authDomain:"tst-board-f2502.firebaseapp.com",databaseURL:"https://tst-board-f2502-default-rtdb.firebaseio.com",projectId:"tst-board-f2502",storageBucket:"tst-board-f2502.firebasestorage.app",messagingSenderId:"42342011946",appId:"1:42342011946:web:36f44016c12ca75cb61f53"};
+var FBPATH="boards/tst-crm-7c1a9e";var fbRef=null,lastPush={};
+function save(){saveLocal();if(fbRef)fbPush()}
+function fbKey(id){return String(id).replace(/[.#$\[\]\/]/g,'_')}
+function fbPush(){for(var id in state.rec){var s=JSON.stringify(state.rec[id]);if(s!==lastPush[id]){fbRef.child('rec/'+fbKey(id)).set(Object.assign({id:id},state.rec[id]));lastPush[id]=s}}
+ var m={};state.custom.forEach(function(c){m[fbKey(c.id)]=c});var cj=JSON.stringify(m);if(cj!==lastPush.__c){fbRef.child('custom').set(m);lastPush.__c=cj}}
+function fbMerge(v){var ch=false;
+ if(v.rec){Object.keys(v.rec).forEach(function(k){var r=v.rec[k];if(!r)return;var id=r.id||k;delete r.id;r.log=r.log||[];var l=state.rec[id];
+  if(!l||(r.upd||'')>(l.upd||'')){state.rec[id]=r;lastPush[id]=JSON.stringify(r);ch=true}})}
+ if(v.custom){var have={};state.custom.forEach(function(c){have[c.id]=1});Object.keys(v.custom).forEach(function(k){var c=v.custom[k];if(c&&!have[c.id]){state.custom.push(c);ch=true}});
+  var m={};state.custom.forEach(function(c){m[fbKey(c.id)]=c});lastPush.__c=JSON.stringify(m)}
+ return ch}
+function setSync(t){var e=document.getElementById('sync');if(e)e.textContent=t}
+function fbInit(){if(typeof firebase==='undefined'){setSync('Lokal rejim');return}
+ try{firebase.initializeApp(FB);fbRef=firebase.database().ref(FBPATH);setSync('● ulanmoqda…');
+  fbRef.on('value',function(snap){var v=snap.val();if(v){if(fbMerge(v)){saveLocal();render();if(cur&&!document.getElementById('drawer').hidden){}}}else fbPush();setSync('● Birgalikda — avtomatik saqlanadi')},
+   function(){setSync('Birgalikda ulanib bo\'lmadi — lokal saqlanmoqda')})}catch(e){setSync('Lokal rejim')}}
 function all(){return BASE.concat(state.custom)}
 function rec(id){if(!state.rec[id])state.rec[id]={st:'yangi',log:[]};return state.rec[id]}
 function stOf(id){return (state.rec[id]&&state.rec[id].st)||'yangi'}
@@ -263,7 +283,7 @@ document.getElementById('bAdd').onclick=function(){
   var c={id:'c'+Date.now(),custom:true,n:n,reg:document.getElementById('aR').value.trim()||'Boshqa',loc:document.getElementById('aR').value.trim(),dir:document.getElementById('aD').value.trim(),ph:document.getElementById('aP').value.trim()?[document.getElementById('aP').value.trim()]:[],em:'',code:'',act:'Qo\'lda qo\'shilgan',fab:document.getElementById('aF').value.trim(),fit:'A',adr:'',src:'',asof:''};
   state.custom.push(c);save();closeM();render();openD(c.id)}};
 ['q','fReg','fFit','fSort'].forEach(function(id){var el=document.getElementById(id);el.addEventListener('input',function(){filt.q=document.getElementById('q').value;filt.reg=document.getElementById('fReg').value;filt.fit=document.getElementById('fFit').value;filt.sort=document.getElementById('fSort').value;render()})});
-buildReg();render();
+buildReg();render();fbInit();
 </script>
 </body>
 </html>
