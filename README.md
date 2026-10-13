@@ -66,9 +66,9 @@ Editing the text does not reset anyone's progress. Saved status and answers are 
 
 **Live:** https://ahmadxon0025.github.io/tst-group/crm.html
 
-A call-tracking CRM for greige (bo'z) suppliers: 79 active weaving companies outside Namangan — registered under weaving codes 13201 cotton, 13202 wool, 13203 silk, 13209 other fabrics, plus 4 whose directory listings show woven fabric (Kogon Nur Textile, Qorako'l Kumush Kalava, Quva Tekstil, Ark Eko). Spinners, finishers, garment makers, traders and others are excluded, with the director and phone from the company register (orginfo.uz, data dated mostly May–June 2025) and the fabrics where a directory publishes them.
+A call-tracking CRM for greige (bo'z) suppliers: 49 active cotton-fabric weavers outside Namangan — registered under code 13201 (cotton fabric weaving), plus 4 whose directory listings show woven fabric (Kogon Nur Textile, Qorako'l Kumush Kalava, Quva Tekstil, Ark Eko). Spinners, finishers, garment makers, traders and others are excluded, with the director and phone from the company register (orginfo.uz, data dated mostly May–June 2025) and the fabrics where a directory publishes them.
 
-- **Moslik (fit):** A = publishes greige/bed-linen fabrics; B = registered cotton-fabric weaver (OKED 13201/13209); C = wool/silk weaver.
+- **Moslik (fit):** A = publishes greige/bed-linen fabrics; B = registered cotton-fabric weaver (OKED 13201/13209).
 - Each company has a status (Yangi → Qo'ng'iroq qilindi / Javob yo'q → Narx olindi → Namuna / sinov → Ta'minotchi, or Mos emas), call fields (person, price $/m, width, MOQ, payment terms, next call date), notes and a dated history.
 - **Nearest first:** pick a starting point (phone GPS, or Namangan/Toshkent/Buxoro/Samarqand/Marg'ilon/Andijon/Qo'qon/Urganch) and the list sorts by distance (≈ road km = straight line × 1.25). Coordinates are district or city centres taken from each registered address (`geo.py`), so companies in the same town show the same distance; "Xaritada" opens the real address in Yandex Maps.
 - **Marshrut:** add companies from their card, then "Marshrut" orders them nearest-next from the starting point, with phones and map links, and copies the list for Telegram. The route is kept on that phone only.
