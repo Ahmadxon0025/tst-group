@@ -61,3 +61,15 @@ Editing the text does not reset anyone's progress. Saved status and answers are 
 - Legal texts were read on 10 Oct 2026. A lawyer must confirm each measure before it is applied.
 - This repo and site are public and contain company-specific figures (debts, enforcement cases, VAT refund). The page carries `noindex`, but anyone with the link can read it.
 - Drag-and-drop uses [SortableJS](https://github.com/SortableJS/Sortable) 1.15.2 from cdnjs. Without it, cards still move by tapping.
+
+## Bo'z ta'minotchilari CRM (`crm.html`)
+
+**Live:** https://ahmadxon0025.github.io/tst-group/crm.html
+
+A call-tracking CRM for greige (bo'z) suppliers: 141 active weaving and textile companies outside Namangan, with the director and phone from the company register (orginfo.uz, data dated mostly May–June 2025) and the fabrics where a directory publishes them.
+
+- **Moslik (fit):** A = publishes greige/bed-linen fabrics; B = registered cotton-fabric weaver (OKED 13201/13209); C = wool/silk weaver; D = main registered activity is not weaving (ask before ruling out).
+- Each company has a status (Yangi → Qo'ng'iroq qilindi / Javob yo'q → Narx olindi → Namuna / sinov → Ta'minotchi, or Mos emas), call fields (person, price $/m, width, MOQ, payment terms, next call date), notes and a dated history.
+- **Hisobot** builds a Telegram summary; **Zaxira** moves the whole CRM to another device. Progress is saved per browser (`localStorage`, key `tst-crm-taminotchi-v1`).
+- To update the list: edit `suppliers.json`, then run `python3 build_crm.py` to rebuild `crm.html`.
+- Registry phones are often the director's mobile or an old number; confirm on the call.
