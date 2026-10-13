@@ -66,6 +66,7 @@ main{padding-inline:16px;padding-block:12px 40px;max-width:1200px;margin:0 auto}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;border-radius:999px;padding:2px 8px;background:var(--chip);white-space:nowrap}
 .fit{font-weight:600;color:var(--fc)}
 .right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.km{font-family:var(--f-mono);font-size:12px;font-weight:600;white-space:nowrap}
 .due{font-size:11.5px;color:var(--warn-fg);background:var(--warn-bg);border-radius:6px;padding:1px 6px}
 @media (max-width:760px){.top{position:static}.sup{grid-template-columns:minmax(0,1fr) auto}.sup .c2,.sup .c3{grid-column:1/2}}
 /* drawer */
@@ -106,6 +107,7 @@ textarea{min-height:64px;resize:vertical}
       <h1>Bo'z ta'minotchilari — CRM</h1>
       <p>Namangandan tashqari to'quv korxonalari · reyestr ma'lumotlari 2025–2026 · <a href="./">← Imtiyozlar taxtasi</a> · <span id="sync"></span></p>
     </div>
+    <button class="btn" id="bRoute" type="button">Marshrut <b id="rCnt">0</b></button>
     <button class="btn" id="bReport" type="button">Hisobot</button>
     <button class="btn" id="bBackup" type="button">Zaxira</button>
     <button class="btn primary" id="bAdd" type="button">+ Korxona</button>
@@ -120,7 +122,19 @@ textarea{min-height:64px;resize:vertical}
       <option value="C">C — jun/ipak to'quvchi</option>
       <option value="D">D — reyestrda to'quv emas</option>
     </select>
+    <select id="fOrig" aria-label="Qayerdan">
+      <option value="gps">📍 Mening joylashuvim (GPS)</option>
+      <option value="41.000,71.668,Namangan (TST)">Namangan (TST)</option>
+      <option value="41.311,69.280,Toshkent">Toshkent</option>
+      <option value="39.768,64.421,Buxoro">Buxoro</option>
+      <option value="39.654,66.959,Samarqand">Samarqand</option>
+      <option value="40.471,71.725,Marg'ilon">Marg'ilon / Farg'ona</option>
+      <option value="40.783,72.344,Andijon">Andijon</option>
+      <option value="40.528,70.942,Qo'qon">Qo'qon</option>
+      <option value="41.550,60.633,Urganch">Urganch</option>
+    </select>
     <select id="fSort" aria-label="Tartib">
+      <option value="dist">Tartib: eng yaqini birinchi</option>
       <option value="fit">Tartib: moslik</option>
       <option value="next">Tartib: keyingi qo'ng'iroq</option>
       <option value="reg">Tartib: viloyat</option>
@@ -183,7 +197,20 @@ function S(k){for(var i=0;i<STATUSES.length;i++)if(STATUSES[i].k===k)return STAT
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function fmtPh(p){var d=String(p).replace(/\D/g,'');if(d.length===12&&d.indexOf('998')===0)return '+998 '+d.substr(3,2)+' '+d.substr(5,3)+' '+d.substr(8,2)+' '+d.substr(10,2);return p}
 function today(){var d=new Date();return d.toISOString().slice(0,10)}
-var filt={q:'',reg:'',fit:'',st:'',sort:'fit'};
+var filt={q:'',reg:'',fit:'',st:'',sort:'dist'};
+var LOC={};try{LOC=JSON.parse(localStorage.getItem('tst-crm-loc')||'{}')}catch(e){}
+LOC.route=LOC.route||[];
+var origin=LOC.origin||{lat:41.000,lon:71.668,label:'Namangan (TST)',src:'41.000,71.668,Namangan (TST)'};
+function saveLoc(){LOC.origin=origin;try{localStorage.setItem('tst-crm-loc',JSON.stringify(LOC))}catch(e){}}
+function km(a,b,c,d){var R=6371,r=Math.PI/180,x=Math.sin((c-a)*r/2),y=Math.sin((d-b)*r/2);var h=x*x+Math.cos(a*r)*Math.cos(c*r)*y*y;return 2*R*Math.asin(Math.sqrt(h))}
+function dist(r){if(r.lat==null)return 99999;return km(origin.lat,origin.lon,r.lat,r.lon)}
+function road(k){return Math.round(k*1.25)}
+function mapUrl(r){return 'https://yandex.uz/maps/?text='+encodeURIComponent((r.adr||r.loc||'')+' '+r.n)}
+function setOrigin(v){var el=document.getElementById('fOrig');
+ if(v==='gps'){if(!navigator.geolocation){toast('GPS mavjud emas');return}
+  toast('Joylashuv aniqlanmoqda…');navigator.geolocation.getCurrentPosition(function(p){origin={lat:p.coords.latitude,lon:p.coords.longitude,label:'siz turgan joy',src:'gps'};saveLoc();render()},
+   function(){toast("GPS ruxsat berilmadi — shaharni tanlang");el.value=origin.src==='gps'?'41.000,71.668,Namangan (TST)':origin.src},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});return}
+ var p=v.split(',');origin={lat:+p[0],lon:+p[1],label:p.slice(2).join(','),src:v};saveLoc();render()}
 
 function buildReg(){var set={};all().forEach(function(r){set[r.reg]=(set[r.reg]||0)+1});var sel=document.getElementById('fReg');
  Object.keys(set).sort().forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=k+' ('+set[k]+')';sel.appendChild(o)})}
@@ -198,6 +225,7 @@ function render(){
  var rows=all().filter(matches);
  var so=filt.sort;
  rows.sort(function(a,b){
+  if(so==='dist'){var da=dist(a),db=dist(b);if(da!==db)return da-db}
   if(so==='next'){var na=(state.rec[a.id]||{}).next||'9999',nb=(state.rec[b.id]||{}).next||'9999';if(na!==nb)return na<nb?-1:1}
   if(so==='reg'&&a.reg!==b.reg)return a.reg<b.reg?-1:1;
   if(so==='upd'){var ua=(state.rec[a.id]||{}).upd||'',ub=(state.rec[b.id]||{}).upd||'';if(ua!==ub)return ua>ub?-1:1}
@@ -211,7 +239,7 @@ function render(){
  allb.innerHTML='Hammasi <b>'+base.length+'</b>';allb.onclick=function(){filt.st='';render()};t.appendChild(allb);
  STATUSES.forEach(function(s){var b=document.createElement('button');b.type='button';b.className='tal';b.setAttribute('aria-pressed',filt.st===s.k?'true':'false');
   b.innerHTML='<span class="dot" style="background:'+s.c+'"></span>'+esc(s.t)+' <b>'+(cnt[s.k]||0)+'</b>';b.onclick=function(){filt.st=filt.st===s.k?'':s.k;render()};t.appendChild(b)});
- document.getElementById('meta').textContent=rows.length+' ta korxona ko\'rsatilmoqda · '+all().length+' tadan';
+ document.getElementById('meta').textContent=rows.length+' ta korxona · boshlanish: '+origin.label+' · masofa yo\'l bo\'yicha taxminan, tuman markazigacha';document.getElementById('rCnt').textContent=LOC.route.length;
  var L=document.getElementById('list');L.innerHTML='';
  if(!rows.length){L.innerHTML='<div class="empty">Filtrga mos korxona yo\'q.</div>';return}
  rows.forEach(function(r){var R=state.rec[r.id]||{};var st=S(R.st||'yangi');
@@ -220,7 +248,7 @@ function render(){
   d.innerHTML='<div><div class="nm">'+esc(r.n)+'</div><div class="sub">'+esc(r.dir||'Direktor ko\'rsatilmagan')+(R.person?' · '+esc(R.person):'')+'</div></div>'+
    '<div class="c2"><div class="ph">'+(ph.length?esc(fmtPh(ph[0])):'—')+'</div><div class="sub">'+esc(r.loc)+'</div></div>'+
    '<div class="c3 sub">'+esc(r.fab||r.act||'')+(R.price?'<br><b style="color:var(--fg)">$'+esc(R.price)+'/m</b>':'')+'</div>'+
-   '<div class="right"><span class="chip"><span class="dot" style="background:'+st.c+'"></span>'+esc(st.t)+'</span><span class="chip fit" style="--fc:'+FITC[r.fit]+'">'+esc(FITT[r.fit])+'</span>'+(R.next?'<span class="due">↻ '+esc(R.next)+'</span>':'')+'</div>';
+   '<div class="right">'+(r.lat!=null?'<span class="km">≈ '+road(dist(r))+' km</span>':'')+(LOC.route.indexOf(r.id)>=0?'<span class="chip">🧭 marshrutda</span>':'')+'<span class="chip"><span class="dot" style="background:'+st.c+'"></span>'+esc(st.t)+'</span><span class="chip fit" style="--fc:'+FITC[r.fit]+'">'+esc(FITT[r.fit])+'</span>'+(R.next?'<span class="due">↻ '+esc(R.next)+'</span>':'')+'</div>';
   d.onclick=function(){openD(r.id)};d.onkeydown=function(e){if(e.key==='Enter')openD(r.id)};
   L.appendChild(d)})}
 function find(id){var a=all();for(var i=0;i<a.length;i++)if(a[i].id===id)return a[i]}
@@ -230,6 +258,7 @@ function openD(id){cur=id;var r=find(id),R=rec(id),D=document.getElementById('dr
  var h='<div class="dh"><h2>'+esc(r.n)+'</h2><button class="btn sm" id="dClose" type="button">Yopish</button></div><div class="db">';
  h+='<div class="sec">Holat</div><div class="stbtns">'+STATUSES.map(function(s){return '<button type="button" class="stb" data-s="'+s.k+'" aria-pressed="'+(R.st===s.k)+'"><span class="dot" style="background:'+s.c+'"></span>'+esc(s.t)+'</button>'}).join('')+'</div>';
  h+='<div class="sec">Aloqa</div><div class="phones">'+(ph.length?ph.map(function(p){return '<div class="pr"><span class="ph">'+esc(fmtPh(p))+'</span><a class="btn sm" href="tel:'+esc(p)+'">Qo\'ng\'iroq</a><button type="button" class="btn sm" data-copy="'+esc(fmtPh(p))+'">Nusxa</button></div>'}).join(''):'<span class="note">Reyestrda telefon yo\'q.</span>')+'</div>';
+ h+='<div class="row"><a class="btn sm" target="_blank" rel="noopener" href="'+esc(mapUrl(r))+'">Xaritada ochish</a><button class="btn sm" id="rtBtn" type="button">'+(LOC.route.indexOf(id)>=0?'Marshrutdan olib tashlash':'Marshrutga qo\'shish')+'</button>'+(r.lat!=null?'<span class="note">≈ '+road(dist(r))+' km · boshlanish: '+esc(origin.label)+'</span>':'')+'</div>';
  h+='<dl class="kv"><dt>Direktor</dt><dd>'+esc(r.dir||'—')+(r.asof?' <span class="note">(reyestr, '+esc(r.asof)+')</span>':'')+'</dd><dt>Joylashuv</dt><dd>'+esc(r.loc)+'</dd><dt>Manzil</dt><dd>'+esc(r.adr||'—')+'</dd><dt>Email</dt><dd>'+esc(r.em||'—')+'</dd><dt>Faoliyat</dt><dd>'+esc((r.code?r.code+' · ':'')+(r.act||''))+'</dd><dt>Matolar</dt><dd>'+esc(r.fab||'E\'lon qilinmagan — qo\'ng\'iroqda so\'rang')+'</dd><dt>STIR</dt><dd>'+esc(r.id.match(/^\d{9}$/)?r.id:'—')+'</dd><dt>Manba</dt><dd>'+(r.src?'<a href="'+esc(r.src)+'" target="_blank" rel="noopener">ochish</a>':'—')+'</dd></dl>';
  h+='<div class="sec">Qo\'ng\'iroq natijasi</div><div class="grid2">'+
   fld('person','Gaplashgan odam','text')+fld('ph2','Qo\'shimcha telefon','text')+
@@ -242,6 +271,7 @@ function openD(id){cur=id;var r=find(id),R=rec(id),D=document.getElementById('dr
  h+='</div>';
  D.innerHTML=h;D.hidden=false;document.getElementById('scrim').hidden=false;
  D.querySelector('#dClose').onclick=closeD;
+ D.querySelector('#rtBtn').onclick=function(){var i=LOC.route.indexOf(id);if(i>=0)LOC.route.splice(i,1);else LOC.route.push(id);saveLoc();this.textContent=i>=0?"Marshrutga qo'shish":'Marshrutdan olib tashlash';render()};
  D.querySelectorAll('.stb').forEach(function(b){b.onclick=function(){var ns=b.getAttribute('data-s');if(R.st!==ns){R.log.unshift({d:today(),t:'Holat: '+S(ns).t});R.st=ns;touch(R)}D.querySelectorAll('.stb').forEach(function(x){x.setAttribute('aria-pressed',x===b)});document.getElementById('log').innerHTML=logHtml(R);render()}});
  D.querySelectorAll('[data-f]').forEach(function(i){i.oninput=function(){R[i.getAttribute('data-f')]=i.value;touch(R);render()}});
  D.querySelectorAll('[data-copy]').forEach(function(b){b.onclick=function(){copy(b.getAttribute('data-copy'))}});
@@ -283,6 +313,20 @@ document.getElementById('bAdd').onclick=function(){
   var c={id:'c'+Date.now(),custom:true,n:n,reg:document.getElementById('aR').value.trim()||'Boshqa',loc:document.getElementById('aR').value.trim(),dir:document.getElementById('aD').value.trim(),ph:document.getElementById('aP').value.trim()?[document.getElementById('aP').value.trim()]:[],em:'',code:'',act:'Qo\'lda qo\'shilgan',fab:document.getElementById('aF').value.trim(),fit:'A',adr:'',src:'',asof:''};
   state.custom.push(c);save();closeM();render();openD(c.id)}};
 ['q','fReg','fFit','fSort'].forEach(function(id){var el=document.getElementById(id);el.addEventListener('input',function(){filt.q=document.getElementById('q').value;filt.reg=document.getElementById('fReg').value;filt.fit=document.getElementById('fFit').value;filt.sort=document.getElementById('fSort').value;render()})});
+document.getElementById('bRoute').onclick=function(){
+ var left=LOC.route.map(find).filter(Boolean);if(!left.length){openM('<h3>Marshrut</h3><p class="note">Korxonani ochib «Marshrutga qo\'shish»ni bosing. Keyin bu yerda eng yaqinidan boshlab tartiblangan yo\'nalish chiqadi.</p><div class="row"><button class="btn" id="clR" type="button">Yopish</button></div>');document.getElementById('clR').onclick=closeM;return}
+ var cur0={lat:origin.lat,lon:origin.lon},plan=[],tot=0;
+ while(left.length){var bi=0,bd=1e9;left.forEach(function(r,i){var d=r.lat==null?1e8:km(cur0.lat,cur0.lon,r.lat,r.lon);if(d<bd){bd=d;bi=i}});var r=left.splice(bi,1)[0];tot+=bd<1e7?bd:0;plan.push({r:r,d:bd});if(r.lat!=null)cur0={lat:r.lat,lon:r.lon}}
+ var h='<h3>Marshrut · boshlanish: '+esc(origin.label)+'</h3><p class="note">Har safar eng yaqin keyingi korxona tanlanadi. Masofa yo\'l bo\'yicha taxminiy (tuman markazlari orasida); jami ≈ '+road(tot)+' km.</p><ol style="padding-left:20px;margin:0;display:flex;flex-direction:column;gap:8px">';
+ plan.forEach(function(p){var r=p.r,R=state.rec[r.id]||{};h+='<li><b>'+esc(r.n)+'</b> <span class="km">+'+(p.d<1e7?road(p.d):'?')+' km</span><br><span class="note">'+esc(r.loc)+' · '+esc((r.ph||[])[0]?fmtPh(r.ph[0]):'telefon yo\'q')+' · '+esc(r.dir||'')+'</span><br><a href="'+esc(mapUrl(r))+'" target="_blank" rel="noopener">Xaritada</a> · <span class="note">'+esc(S(R.st||'yangi').t)+'</span></li>'});
+ h+='</ol><div class="row"><button class="btn" id="cpRt" type="button">Nusxa (Telegram)</button><button class="btn" id="clrRt" type="button">Marshrutni tozalash</button><button class="btn" id="clR" type="button">Yopish</button></div>';
+ openM(h);
+ var txt='Marshrut (boshlanish: '+origin.label+'):\n'+plan.map(function(p,i){return (i+1)+'. '+p.r.n+' — '+p.r.loc+' — '+((p.r.ph||[])[0]?fmtPh(p.r.ph[0]):'')}).join('\n');
+ document.getElementById('cpRt').onclick=function(){copy(txt)};
+ document.getElementById('clrRt').onclick=function(){LOC.route=[];saveLoc();closeM();render()};
+ document.getElementById('clR').onclick=closeM};
+(function(){var el=document.getElementById('fOrig');el.value=origin.src==='gps'?'gps':origin.src;if(!el.value)el.value='41.000,71.668,Namangan (TST)';
+ el.addEventListener('change',function(){setOrigin(el.value)});if(origin.src==='gps')setOrigin('gps')})();
 buildReg();render();fbInit();
 </script>
 </body>

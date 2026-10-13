@@ -70,6 +70,8 @@ A call-tracking CRM for greige (bo'z) suppliers: 141 active weaving and textile 
 
 - **Moslik (fit):** A = publishes greige/bed-linen fabrics; B = registered cotton-fabric weaver (OKED 13201/13209); C = wool/silk weaver; D = main registered activity is not weaving (ask before ruling out).
 - Each company has a status (Yangi → Qo'ng'iroq qilindi / Javob yo'q → Narx olindi → Namuna / sinov → Ta'minotchi, or Mos emas), call fields (person, price $/m, width, MOQ, payment terms, next call date), notes and a dated history.
+- **Nearest first:** pick a starting point (phone GPS, or Namangan/Toshkent/Buxoro/Samarqand/Marg'ilon/Andijon/Qo'qon/Urganch) and the list sorts by distance (≈ road km = straight line × 1.25). Coordinates are district or city centres taken from each registered address (`geo.py`), so companies in the same town show the same distance; "Xaritada" opens the real address in Yandex Maps.
+- **Marshrut:** add companies from their card, then "Marshrut" orders them nearest-next from the starting point, with phones and map links, and copies the list for Telegram. The route is kept on that phone only.
 - **Shared:** changes sync through the same Firebase database as the board (path `boards/tst-crm-7c1a9e`), one record per company, newest edit wins. Without a connection it keeps working locally (`localStorage`, key `tst-crm-taminotchi-v1`).
 - **Hisobot** builds a Telegram summary; **Zaxira** gives a full backup code.
 - To update the list: edit `suppliers.json`, then run `python3 build_crm.py` to rebuild `crm.html`.
