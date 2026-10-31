@@ -11,7 +11,8 @@
         <button type="button" data-add="0">Bugun</button>
         <button type="button" data-add="1">Ertaga</button>
         <button type="button" data-add="7">1 haftada</button>
-        <input id="add-due" type="date" name="due" required aria-label="Sana">
+        <button type="button" data-add="none">Sanasiz</button>
+        <input id="add-due" type="date" name="due" aria-label="Sana">
       </div></div>
     <div class="qa-row">
       <div><span class="lbl">Kompaniya</span>
@@ -38,10 +39,10 @@
   var d=document.getElementById('add'),due=document.getElementById('add-due'),today='{{ today_iso }}';
   var title=document.getElementById('add-title'),chips=document.getElementById('qa-chips');
   function iso(base,n){var t=new Date(base+'T12:00:00');t.setDate(t.getDate()+n);return t.toISOString().slice(0,10);}
-  function mark(){d.querySelectorAll('[data-add]').forEach(function(b){b.classList.toggle('on',iso(today,+b.dataset.add)===due.value);});}
-  d.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){due.value=iso(today,+b.dataset.add);mark();};});
+  function mark(){d.querySelectorAll('[data-add]').forEach(function(b){b.classList.toggle('on',b.dataset.add==='none'?!due.value:iso(today,+b.dataset.add)===due.value);});}
+  d.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){due.value=b.dataset.add==='none'?'':iso(today,+b.dataset.add);mark();};});
   due.onchange=mark;
-  window.openAdd=function(v){due.value=v||today;mark();chips.innerHTML='';d.showModal();title.focus();};
+  window.openAdd=function(v){due.value=(v===undefined||v===null)?'':v;mark();chips.innerHTML='';d.showModal();title.focus();};
   d.addEventListener('click',function(e){if(e.target===d)d.close();});
   title.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();d.querySelector('form').requestSubmit();}});
   function chip(t,cls){return '<span class="qa-chip '+(cls||'')+'">'+t.replace(/</g,'&lt;')+'</span>';}

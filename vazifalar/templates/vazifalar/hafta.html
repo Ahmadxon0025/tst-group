@@ -24,6 +24,11 @@
   {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}{% if c.key %} keep{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
 </nav>
 <main class="board">
+  <section class="col inbox" data-date="" aria-label="Rejasiz">
+    <div class="ch">Rejasiz <span class="c js-count">{{ inbox|length }}</span></div>
+    {% for t in inbox %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=False %}{% empty %}<p class="none inbox-hint">Sanasiz vazifalar shu yerda. Kunga sudrab qo'ying.</p>{% endfor %}
+    {% if me.can_create %}<button class="addline" type="button" onclick="openAdd('')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 2v10M2 7h10"/></svg>Vazifa qo'shish</button>{% endif %}
+  </section>
   {% if overdue %}
   <section class="col late" aria-label="Kechikkan">
     <div class="ch">Kechikkan <span class="c">{{ overdue|length }}</span></div>

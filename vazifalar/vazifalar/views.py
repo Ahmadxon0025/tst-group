@@ -93,6 +93,9 @@ def hafta(request):
         return _flags(me, ts)
     mark(overdue)
 
+    inbox = mark(list(_with_counts(base.filter(status=Vazifa.YANGI, due_date__isnull=True))
+                      .order_by("-important", "created_at")))
+
     week = (_with_counts(base.filter(due_date__range=(start, end)))
             .exclude(status=Vazifa.YANGI, due_date__lt=today))   # open past tasks live in Kechikkan only
     by_day = {}
@@ -120,7 +123,7 @@ def hafta(request):
     if company:
         title = f"{title} · {dict(cfg.COMPANIES)[company]}" if who else dict(cfg.COMPANIES)[company]
     return render(request, "vazifalar/hafta.html", {
-        "days": days, "overdue": overdue, "month_label": dates.month_label(start, end), "title": title,
+        "days": days, "overdue": overdue, "inbox": inbox, "month_label": dates.month_label(start, end), "title": title,
         "prev_link": link(w=w - 1), "next_link": link(w=w + 1), "today_link": link(w=0),
         "is_this_week": w == 0, "who": who, "here": here, "kim_value": q["kim"], "company": company,
         "company_links": [{"key": "", "label": "Hammasi", "href": link(k=""), "on": not company}] + [
@@ -146,6 +149,7 @@ def mening(request):
         ("Kechikkan", "late", overdue),
         ("Bugun", "today", list(open_qs.filter(due_date=today).order_by("-important", "created_at"))),
         ("Keyingi", "next", list(open_qs.filter(due_date__gt=today).order_by("due_date", "-important"))),
+        ("Rejasiz", "inbox", list(open_qs.filter(due_date__isnull=True).order_by("-important", "created_at"))),
         ("Bajarilgan (7 kun)", "done",
          list(mine.filter(status=Vazifa.BAJARILDI, done_at__date__gte=today - timedelta(days=7))
               .order_by("-done_at"))),
@@ -155,7 +159,7 @@ def mening(request):
         given = list(_with_counts(Vazifa.objects.filter(created_by=me, status=Vazifa.YANGI)
                                   .exclude(assignee=me).select_related("assignee")).order_by("due_date"))
         for t in given:
-            if t.due_date < today:
+            if t.due_date and t.due_date < today:
                 t.late_text = _late_text(t, today)
     for _, _, items in groups:
         _flags(me, items)
@@ -180,14 +184,17 @@ def shtab(request):
         mine = base.filter(assignee=p)
         late = list(mine.filter(status=Vazifa.YANGI, due_date__lt=today).order_by("due_date"))
         soon = list(mine.filter(status=Vazifa.YANGI, due_date__range=(today, week_end)).order_by("due_date"))
+        nodate = list(mine.filter(status=Vazifa.YANGI, due_date__isnull=True).order_by("-important", "created_at"))
         done = mine.filter(status=Vazifa.BAJARILDI, done_at__date__gte=today - timedelta(days=7)).count()
         for t in late:
             t.late_text = _late_text(t, today)
             t.dm = dates.day_month_short(t.due_date)
         for t in soon:
             t.dm = dates.day_month_short(t.due_date)
-        if late or soon or done:
-            rows.append({"p": p, "late": late, "soon": soon, "done": done})
+        for t in nodate:
+            t.dm = "—"
+        if late or soon or nodate or done:
+            rows.append({"p": p, "late": late, "soon": soon, "nodate": nodate, "done": done})
     return render(request, "vazifalar/shtab.html", {
         "rows": rows, "today_dm": dates.day_month(today), "end_dm": dates.day_month(week_end),
         "here": "/shtab/" + (f"?k={company}" if company else ""), "company": company,
@@ -229,7 +236,7 @@ def create(request):
     parsed = parse_text(raw)
     who = request.POST.get("kim") or parsed.who or me.username      # no @name → the task is yours
     assignee = UserAccount.objects.filter(username=who, is_active=True).first()
-    due = _parse_date(request.POST.get("due")) or parsed.due or dates.today()
+    due = _parse_date(request.POST.get("due")) or parsed.due     # no date → "Rejasiz"
     try:
         if assignee is None:
             raise sv.NotAllowed("Kimga ekanini tanlang.")
@@ -314,7 +321,8 @@ def save(request, pk):
     who = UserAccount.objects.filter(username=request.POST.get("kim") or "", is_active=True).first()
     company = request.POST.get("company")
     sv.update_task(request.account, pk, title=request.POST.get("title"), assignee=who,
-                   due_date=_parse_date(request.POST.get("due")),
+                   due_date=(None if (request.POST.get("due") or "").strip() == ""
+                             else (_parse_date(request.POST.get("due")) or sv.UNSET)),
                    company=(company if company is not None else None),
                    important=bool(request.POST.get("important")),
                    repeat=request.POST.get("repeat", None))
@@ -325,18 +333,19 @@ def save(request, pk):
 @require_POST
 def move(request, pk: int):
     """Drag-and-drop on the board: a new date, answered in JSON (the page moves the card itself)."""
-    new_due = _parse_date(request.POST.get("due"))
+    raw = (request.POST.get("due") or "").strip()
+    new_due = _parse_date(raw) if raw else None          # "" → back to Rejasiz
     try:
-        if new_due is None:
+        if raw and new_due is None:
             raise sv.NotAllowed("Sana noto'g'ri.")
-        if new_due < dates.today():
+        if new_due and new_due < dates.today():
             raise sv.NotAllowed("O'tgan kunga qo'yib bo'lmaydi.")
         t = sv.change_due(request.account, pk, new_due)
     except Vazifa.DoesNotExist:
         raise Http404
     except sv.NotAllowed as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
-    return JsonResponse({"ok": True, "due": t.due_date.isoformat()})
+    return JsonResponse({"ok": True, "due": t.due_date.isoformat() if t.due_date else ""})
 
 
 @_task_action

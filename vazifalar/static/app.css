@@ -279,3 +279,7 @@ details.manage .row+.row{margin-top:8px}
 .qbar-chips{flex-basis:100%;padding-left:22px}
 .qbar-chips:empty{display:none}
 @media (max-width:760px){.qbar{margin:12px 16px 0}.qbar.inpage{margin:12px 0 0}.qbar-go{display:none}}
+/* ---- Rejasiz column ---- */
+.col.inbox .ch{color:var(--muted)}
+.col.inbox{background:color-mix(in srgb,var(--hover) 60%,transparent);border-radius:10px;padding:8px 8px 4px;margin:-8px 0 0 -8px}
+.inbox-hint{font-size:12px}

@@ -156,10 +156,10 @@ def quick_ask(chat_id, user, text):
     if not p.title:
         return _reply(chat_id, user, T.QUICK_EMPTY)
     who = UserAccount.objects.filter(username=p.who or user.username, is_active=True).first() or user
-    due = p.due or dates.today()
+    due = p.due                                   # no date → "Rejasiz"
     s = _session(user)
     s.state = "quick"
-    s.data = {"title": p.title[:cfg.TASK_TITLE_MAX], "who": who.username, "due": due.isoformat(),
+    s.data = {"title": p.title[:cfg.TASK_TITLE_MAX], "who": who.username, "due": due.isoformat() if due else "",
               "co": p.company or "", "imp": p.important, "rep": p.repeat}
     s.save()
     extra = ""
@@ -277,7 +277,7 @@ def handle_callback(cq: dict) -> None:
         from datetime import date as _date
         who = UserAccount.objects.filter(username=d.get("who"), is_active=True).first()
         try:
-            t = sv.create_task(user, d.get("title", ""), who, _date.fromisoformat(d["due"]), source=TG,
+            t = sv.create_task(user, d.get("title", ""), who, _date.fromisoformat(d["due"]) if d.get("due") else None, source=TG,
                                company=d.get("co", ""), important=bool(d.get("imp")), repeat=d.get("rep", ""))
         except (sv.NotAllowed, KeyError, ValueError) as e:
             return _reply(chat_id, user, str(e))

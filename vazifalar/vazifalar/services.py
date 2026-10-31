@@ -91,14 +91,15 @@ def create_task(actor: UserAccount, title: str, assignee: UserAccount, due_date:
         raise NotAllowed(f"Matn {cfg.TASK_TITLE_MAX} belgidan oshmasin.")
     if not assignee.is_active:
         raise NotAllowed("Bu odam faol emas.")
-    if due_date is None:
-        raise NotAllowed("Muddatni tanlang.")
+    if repeat and due_date is None:
+        from core import dates
+        due_date = dates.today()                     # a repeating task needs a first date
     with transaction.atomic():
         task = Vazifa.objects.create(title=title, assignee=assignee, due_date=due_date, created_by=actor,
                                      company=company, important=bool(important), repeat=repeat)
         _event(task, VazifaEvent.YARATILDI, actor, source, new_due=due_date, new_assignee=assignee)
         audit.write(actor.username, "vazifa_yaratildi", "vazifa", task.pk,
-                    new={"title": title, "assignee": assignee.username, "due": due_date.isoformat(),
+                    new={"title": title, "assignee": assignee.username, "due": due_date.isoformat() if due_date else None,
                          "company": company, "important": bool(important), "repeat": repeat})
     return task
 
@@ -126,7 +127,7 @@ def _spawn_next(task: Vazifa):  # CORE: reusable — a repeating task closed →
         return None
     from core import dates
     from core.quickadd import next_repeat
-    due = next_repeat(task.repeat, task.due_date, dates.today())
+    due = next_repeat(task.repeat, task.due_date or dates.today(), dates.today())
     if due is None:
         return None
     nxt = Vazifa.objects.create(title=task.title, assignee=task.assignee, due_date=due, created_by=task.created_by,
@@ -168,10 +169,8 @@ def cancel(actor: UserAccount, task_id: int, reason: str, source: str = VazifaEv
     return task
 
 
-def change_due(actor: UserAccount, task_id: int, new_due: date, source: str = VazifaEvent.WEB) -> Vazifa:
-    # CORE: reusable
-    if new_due is None:
-        raise NotAllowed("Yangi muddatni tanlang.")
+def change_due(actor: UserAccount, task_id: int, new_due, source: str = VazifaEvent.WEB) -> Vazifa:
+    # CORE: reusable — new_due None moves the task back to "Rejasiz"
     with transaction.atomic():
         task = _locked(task_id)
         if not can_manage(actor, task):
@@ -185,7 +184,8 @@ def change_due(actor: UserAccount, task_id: int, new_due: date, source: str = Va
         task.save(update_fields=["due_date"])
         _event(task, VazifaEvent.MUDDAT, actor, source, old_due=old, new_due=new_due)
         audit.write(actor.username, "vazifa_muddat", "vazifa", task.pk,
-                    old={"due": old.isoformat()}, new={"due": new_due.isoformat()})
+                    old={"due": old.isoformat() if old else None},
+                    new={"due": new_due.isoformat() if new_due else None})
     return task
 
 
@@ -233,7 +233,10 @@ def change_title(actor: UserAccount, task_id: int, title: str, source: str = Vaz
     return task
 
 
-def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, due_date=None, company=None,
+UNSET = object()   # "leave as it is" (None means: no date)
+
+
+def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, due_date=UNSET, company=None,
                 important=None, repeat=None, source: str = VazifaEvent.WEB) -> Vazifa:  # CORE: reusable — the edit window's "Saqlash"
     """Applies only what changed, all in one transaction; each change is its own history line."""
     with transaction.atomic():
@@ -244,7 +247,7 @@ def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, 
             change_title(actor, task_id, title, source)
         if assignee is not None and assignee.pk != task.assignee_id:
             reassign(actor, task_id, assignee, source)
-        if due_date is not None and due_date != task.due_date:
+        if due_date is not UNSET and due_date != task.due_date:
             change_due(actor, task_id, due_date, source)
         if company is not None and company != task.company:
             set_company(actor, task_id, company)
@@ -259,6 +262,10 @@ def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, 
             old = task.repeat
             task.repeat = _repeat(repeat)
             task.save(update_fields=["repeat"])
+            if task.repeat and task.due_date is None:
+                from core import dates
+                change_due(actor, task_id, dates.today(), source)
+                task.refresh_from_db()
             _event(task, VazifaEvent.TAKROR, actor, source, note=task.repeat_label or "Takrorlanmaydi")
             audit.write(actor.username, "vazifa_takror_ozgardi", "vazifa", task.pk,
                         old={"repeat": old}, new={"repeat": task.repeat})

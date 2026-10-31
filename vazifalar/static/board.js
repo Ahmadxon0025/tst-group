@@ -29,7 +29,7 @@
       qt = setTimeout(function () {
         fetch("/vazifa/tahlil/?q=" + encodeURIComponent(qb.value), {credentials: "same-origin"})
           .then(function (r) { return r.json(); }).then(function (j) {
-            var h = chip("📅 " + (j.due_label || "Bugun"));
+            var h = chip(j.due_label ? "📅 " + j.due_label : "📥 Rejasiz");
             h += chip("👤 " + (j.who_name || "Men"));
             if (j.company) h += chip("#" + j.company_label, "keep");
             if (j.important) h += chip("❗ Muhim", "imp");
@@ -55,6 +55,7 @@
     dlg.addEventListener("click", function (e) {
       if (e.target === dlg || e.target.closest(".js-close")) dlg.close();
       var b = e.target.closest("[data-setdate]");
+      if (b && b.dataset.setdate === "none") { dlg.querySelector('input[name="due"]').value = ""; b = null; }
       if (b) {
         var base = dlg.querySelector(".tp").dataset.today, d = new Date(base + "T12:00:00");
         d.setDate(d.getDate() + parseInt(b.dataset.setdate, 10));

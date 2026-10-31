@@ -12,12 +12,13 @@
   {% for r in rows %}
   <section class="grp person" style="--p:{{ r.p.color }}">
     <h2><span class="av" style="--p:{{ r.p.color }}">{{ r.p.initial }}</span>{{ r.p.name }}
-      <span class="c">{% if r.late %}<span class="lateby">{{ r.late|length }} kechikkan</span> · {% endif %}{{ r.soon|length }} shu hafta · {{ r.done }} bajarildi</span></h2>
+      <span class="c">{% if r.late %}<span class="lateby">{{ r.late|length }} kechikkan</span> · {% endif %}{{ r.soon|length }} shu hafta{% if r.nodate %} · {{ r.nodate|length }} rejasiz{% endif %} · {{ r.done }} bajarildi</span></h2>
     <table class="st">
       <tbody>
       {% for t in r.late %}<tr class="late-r"><td class="d">{{ t.dm }}</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>{% if t.company %} <span class="co keep">#{{ t.company_label }}</span>{% endif %}</td><td class="s">{{ t.late_text }}</td></tr>{% endfor %}
       {% for t in r.soon %}<tr><td class="d">{{ t.dm }}</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>{% if t.company %} <span class="co keep">#{{ t.company_label }}</span>{% endif %}</td><td class="s"></td></tr>{% endfor %}
-      {% if not r.late and not r.soon %}<tr><td colspan="3" class="none">Ochiq vazifa yo'q</td></tr>{% endif %}
+      {% for t in r.nodate %}<tr class="nodate-r"><td class="d">Rejasiz</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>{% if t.company %} <span class="co keep">#{{ t.company_label }}</span>{% endif %}</td><td class="s"></td></tr>{% endfor %}
+      {% if not r.late and not r.soon and not r.nodate %}<tr><td colspan="3" class="none">Ochiq vazifa yo'q</td></tr>{% endif %}
       </tbody>
     </table>
   </section>

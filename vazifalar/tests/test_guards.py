@@ -254,12 +254,56 @@ def test_app_manifest_and_service_worker(client):
     assert sw.status_code == 200 and sw["Service-Worker-Allowed"] == "/"
 
 
-def test_one_line_add_defaults_to_me_and_today(client, boss, ali):
+def test_one_line_add_defaults_to_me_and_rejasiz(client, boss, ali):
     login(client, boss)
     assert 'id="qbar"' in client.get("/").content.decode()
     client.post("/vazifa/yangi/", {"title": "Bankka qo'ng'iroq", "next": "/"})
     client.post("/vazifa/yangi/", {"title": "Hisobot ertaga @ali #tst !", "next": "/"})
     a = Vazifa.objects.get(title="Bankka qo'ng'iroq")
     b = Vazifa.objects.get(title="Hisobot")
-    assert a.assignee == boss and a.due_date == timezone.localdate()
+    assert a.assignee == boss and a.due_date is None
     assert b.assignee == ali and b.company == "tst" and b.important
+
+
+
+def test_rejasiz_column_and_drag_both_ways(client, boss, ali):
+    today = timezone.localdate()
+    t = sv.create_task(boss, "Rejasiz ish", ali, None)
+    login(client, boss)
+    page = client.get("/").content.decode()
+    assert 'class="col inbox"' in page and page.count("Rejasiz ish") == 1
+    r = client.post(f"/vazifa/{t.pk}/kunga/", {"due": (today + timedelta(days=1)).isoformat()})
+    assert r.json()["ok"]
+    r = client.post(f"/vazifa/{t.pk}/kunga/", {"due": ""})          # back to Rejasiz
+    assert r.json() == {"ok": True, "due": ""}
+    t.refresh_from_db()
+    assert t.due_date is None
+    assert [e.kind for e in t.events.all()] == ["yaratildi", "muddat", "muddat"]
+
+
+def test_undated_is_never_late_and_not_in_morning_list(boss, ali):
+    from bot import schedule
+    from bot.models import Outbox
+    t = sv.create_task(boss, "Sanasiz", ali, None)
+    assert not Vazifa.objects.filter(due_date__lt=timezone.localdate(), pk=t.pk).exists()
+    ali.telegram_user_id = 111
+    ali.save()
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    d = timezone.localdate()
+    schedule.tick(datetime(d.year, d.month, d.day, 8, 5, tzinfo=ZoneInfo("Asia/Tashkent")))
+    assert not Outbox.objects.filter(key__startswith="morning:").exists()
+
+
+def test_edit_window_can_clear_the_date(client, boss, ali):
+    t = sv.create_task(boss, "x", ali, timezone.localdate())
+    login(client, boss)
+    client.post(f"/vazifa/{t.pk}/saqlash/", {"title": "x", "kim": ali.username, "due": "", "company": "", "next": "/"})
+    t.refresh_from_db()
+    assert t.due_date is None
+    assert "Sanasiz" in client.get(f"/vazifa/{t.pk}/?partial=1").content.decode()
+
+
+def test_repeat_without_date_starts_today(boss):
+    t = sv.create_task(boss, "Kassa", boss, None, repeat="daily")
+    assert t.due_date == timezone.localdate()

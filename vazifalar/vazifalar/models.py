@@ -23,7 +23,7 @@ class Vazifa(LedgerModel):  # CORE: reusable
     id = models.BigAutoField(primary_key=True)          # short number: fits a Telegram button
     title = models.CharField(max_length=300)
     assignee = models.ForeignKey(UserAccount, on_delete=models.PROTECT, related_name="vazifalar")
-    due_date = models.DateField()
+    due_date = models.DateField(null=True, blank=True)   # empty = "Rejasiz": written down, not yet planned
     status = models.CharField(max_length=12, choices=STATUSES, default=YANGI)
     company = models.CharField(max_length=20, blank=True, default="")     # key from CONFIG COMPANIES, optional
     important = models.BooleanField(default=False)                         # "Muhim": shown first, red

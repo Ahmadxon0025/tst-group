@@ -14,8 +14,8 @@
       <label class="tp-f"><span>Kim</span>
         <select name="kim">{% for p in people %}<option value="{{ p.username }}"{% if p.pk == t.assignee_id %} selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></label>
       <div class="tp-f"><span>Muddat</span>
-        <div class="tp-date"><input type="date" name="due" value="{{ t.due_date|date:'Y-m-d' }}" required aria-label="Muddat">
-          <button type="button" data-setdate="0">Bugun</button><button type="button" data-setdate="1">Ertaga</button><button type="button" data-setdate="7">+1 hafta</button></div></div>
+        <div class="tp-date"><input type="date" name="due" value="{{ t.due_date|date:'Y-m-d' }}" aria-label="Muddat">
+          <button type="button" data-setdate="none">Sanasiz</button><button type="button" data-setdate="0">Bugun</button><button type="button" data-setdate="1">Ertaga</button><button type="button" data-setdate="7">+1 hafta</button></div></div>
       <label class="tp-f"><span>Kompaniya</span>
         <select name="company"><option value="">Yo'q</option>{% for k, label in companies %}<option value="{{ k }}"{% if t.company == k %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
       <div class="tp-f"><span>Takrorlash</span>

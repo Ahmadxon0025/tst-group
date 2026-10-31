@@ -14,11 +14,15 @@ def week_monday(d: date) -> date:  # CORE: reusable
     return d - timedelta(days=d.weekday())
 
 
-def day_month(d: date) -> str:  # CORE: reusable — "2-noyabr"
+def day_month(d: date) -> str:  # CORE: reusable — "2-noyabr"; no date → "Sanasiz"
+    if d is None:
+        return "Sanasiz"
     return f"{d.day}-{cfg.MONTHS[d.month - 1]}"
 
 
-def day_month_short(d: date) -> str:  # CORE: reusable — "2-noy"
+def day_month_short(d: date) -> str:  # CORE: reusable — "2-noy"; no date → "sanasiz"
+    if d is None:
+        return "sanasiz"
     return f"{d.day}-{cfg.MONTHS_SHORT[d.month - 1]}"
 
 

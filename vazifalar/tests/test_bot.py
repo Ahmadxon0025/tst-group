@@ -231,7 +231,7 @@ def test_quick_add_no_and_defaults_to_self(tg, boss):
     handlers.handle_update(msg(999, "Bankka qo'ng'iroq"))
     handlers.handle_update(cb(999, "qa:y"))
     t = Vazifa.objects.get()
-    assert t.assignee == boss and t.due_date == timezone.localdate()
+    assert t.assignee == boss and t.due_date is None          # no date → Rejasiz
 
 
 def test_worker_message_is_not_a_task(tg, worker):
