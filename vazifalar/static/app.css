@@ -255,3 +255,16 @@ details.manage .row+.row{margin-top:8px}
 .impmark{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:var(--red);color:#fff;font-size:11px;font-weight:700;vertical-align:1px}
 .card.imp{border-left:3px solid var(--red)}
 .card.imp .tick{border-color:var(--red)}
+/* ---- card actions (bottom right) ---- */
+.card{position:relative}
+.card .body{padding-right:0}
+.cact{position:absolute;right:6px;bottom:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:var(--card);border-radius:6px}
+.card:hover .cact,.card:focus-within .cact{opacity:1}
+.cact form{margin:0;display:flex}
+.ca{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:6px;color:var(--faint);cursor:pointer;padding:0}
+.ca:hover{background:var(--hover);color:var(--ink)}
+.ca.ok:hover{color:var(--green)}
+.ca.del:hover{color:var(--red)}
+.card .foot{padding-right:84px;min-height:16px}
+@media (hover:none){.cact{opacity:1}}
+@media (prefers-reduced-motion:reduce){.cact{transition:none}}

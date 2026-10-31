@@ -38,6 +38,15 @@ def _with_counts(qs):
     return qs.annotate(izoh_count=Count("events", filter=Q(events__kind=VazifaEvent.IZOH)))
 
 
+def _flags(me, tasks):
+    """What this person may do with each card: done (touch), edit/delete/drag (manage)."""
+    for t in tasks:
+        t.can_touch = sv.can_touch(me, t) and t.status != Vazifa.BEKOR
+        t.can_manage = sv.can_manage(me, t) and t.status != Vazifa.BEKOR
+        t.movable = t.can_manage and t.is_open
+    return tasks
+
+
 def _late_text(task, today):
     return f"{(today - task.due_date).days} kun kechikdi"
 
@@ -81,9 +90,7 @@ def hafta(request):
         t.dm = dates.day_month_short(t.due_date)
 
     def mark(ts):
-        for t in ts:
-            t.movable = sv.can_manage(me, t) and t.is_open
-        return ts
+        return _flags(me, ts)
     mark(overdue)
 
     week = (_with_counts(base.filter(due_date__range=(start, end)))
@@ -151,8 +158,10 @@ def mening(request):
             if t.due_date < today:
                 t.late_text = _late_text(t, today)
     for _, _, items in groups:
+        _flags(me, items)
         for t in items:
             t.dm = dates.day_month_short(t.due_date)
+    _flags(me, given)
     for t in given:
         t.dm = dates.day_month_short(t.due_date)
     return render(request, "vazifalar/mening.html", {"groups": groups, "given": given, "here": "/mening/"})
