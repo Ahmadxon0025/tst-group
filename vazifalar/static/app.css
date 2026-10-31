@@ -241,3 +241,17 @@ details.manage .row+.row{margin-top:8px}
 .msgs[hidden]{display:none!important}
 .tp-date input{flex:1 1 150px}.tp-date button{flex:0 0 auto}
 @media (min-width:761px){.board{min-height:calc(100vh - 140px)}.board>.col{align-self:stretch;min-height:200px}}
+/* ---- quick add, muhim, repeat ---- */
+.qa-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:0}
+.qa-chip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.qa-chip.imp{background:#FBEAE8;color:var(--red)}
+.qa-hint{margin:-6px 0 0;font-size:12px;color:var(--faint)}
+.qa-hint b{font-weight:600;color:var(--muted)}
+.qa-row{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.qa-rep{display:flex;align-items:center;gap:8px}
+.qa-rep select{height:30px;border:1px solid var(--card-line);border-radius:6px;padding:0 6px;background:var(--card);font-size:13px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.tp-f.chk>span:last-child{display:flex;align-items:center;gap:6px;height:34px}
+.impmark{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:var(--red);color:#fff;font-size:11px;font-weight:700;vertical-align:1px}
+.card.imp{border-left:3px solid var(--red)}
+.card.imp .tick{border-color:var(--red)}

@@ -34,21 +34,21 @@ def _linked():
 def morning(today) -> None:
     for u in _linked():
         mine = Vazifa.objects.filter(assignee=u, status=Vazifa.YANGI)
-        todays = list(mine.filter(due_date=today).order_by("created_at"))
-        late = list(mine.filter(due_date__lt=today).order_by("due_date"))
+        todays = list(mine.filter(due_date=today).order_by("-important", "created_at"))
+        late = list(mine.filter(due_date__lt=today).order_by("-important", "due_date"))
         if not todays and not late:
             continue
         lines, buttons, n = [T.MORNING_HEAD.format(n=len(todays) + len(late))], [], 0
         for t in todays:
             n += 1
-            lines.append(f"{n}. {t.title}")
+            lines.append(f"{n}. {'❗ ' if t.important else ''}{t.title}")
             buttons.append({"text": f"✓ {n}", "callback_data": f"d:{t.pk}"})
         if late:
             lines.append("")
             lines.append(T.MORNING_LATE)
             for t in late:
                 n += 1
-                lines.append(f"{n}. {t.title} ({dates.day_month_short(t.due_date)})")
+                lines.append(f"{n}. {'❗ ' if t.important else ''}{t.title} ({dates.day_month_short(t.due_date)})")
                 buttons.append({"text": f"✓ {n}", "callback_data": f"d:{t.pk}"})
         rows = [buttons[i:i + 5] for i in range(0, len(buttons), 5)]
         enqueue(u, f"morning:{u.pk}:{today}", "\n".join(lines), {"inline_keyboard": rows})

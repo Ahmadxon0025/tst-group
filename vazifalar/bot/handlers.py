@@ -149,6 +149,31 @@ def _co_keyboard(user):
     return {"inline_keyboard": [row[:3], row[3:]]}
 
 
+def quick_ask(chat_id, user, text):
+    """Any plain message from a person who may create tasks → a parsed preview with Qo'shish / Yo'q."""
+    from vazifalar.quick import parse_text
+    p = parse_text(text)
+    if not p.title:
+        return _reply(chat_id, user, T.QUICK_EMPTY)
+    who = UserAccount.objects.filter(username=p.who or user.username, is_active=True).first() or user
+    due = p.due or dates.today()
+    s = _session(user)
+    s.state = "quick"
+    s.data = {"title": p.title[:cfg.TASK_TITLE_MAX], "who": who.username, "due": due.isoformat(),
+              "co": p.company or "", "imp": p.important, "rep": p.repeat}
+    s.save()
+    extra = ""
+    if p.company:
+        extra += f" · #{dict(cfg.COMPANIES)[p.company]}"
+    if p.important:
+        extra += " · ❗"
+    if p.repeat:
+        extra += " · 🔁 " + Vazifa(repeat=p.repeat).repeat_label
+    _reply(chat_id, user, T.QUICK_ASK.format(title=p.title, who=who.name, due=dates.day_month(due), extra=extra),
+           {"inline_keyboard": [[{"text": render(user, T.QUICK_YES), "callback_data": "qa:y"},
+                                 {"text": render(user, T.QUICK_NO), "callback_data": "qa:n"}]]})
+
+
 def cmd_yangi(chat_id, user):
     if not user.can_create:
         return _reply(chat_id, user, T.NEW_NO_RIGHT)
@@ -205,6 +230,8 @@ def handle_message(msg: dict) -> None:
             return _reply(chat_id, user, T.COMMENT_OK)
         except (sv.NotAllowed, Vazifa.DoesNotExist):
             return _reply(chat_id, user, T.NOT_YOURS)
+    if (not s or s.state in ("", "quick")) and text and user.can_create:   # a new line replaces a pending one
+        return quick_ask(chat_id, user, text)
     if s and s.state == "new_title" and text:
         s.data = {"title": text[:cfg.TASK_TITLE_MAX]}
         s.state = "new_who"
@@ -241,6 +268,20 @@ def handle_callback(cq: dict) -> None:
         _answer(cq["id"], user)
         return _reply(chat_id, user, T.ASK_COMMENT.format(title=task.title))
     s = BotSession.objects.filter(user=user).first()
+    if kind == "qa" and s and s.state == "quick":
+        d = s.data
+        _clear(user)
+        _answer(cq["id"], user)
+        if arg != "y":
+            return _reply(chat_id, user, T.CANCELLED_FLOW)
+        from datetime import date as _date
+        who = UserAccount.objects.filter(username=d.get("who"), is_active=True).first()
+        try:
+            t = sv.create_task(user, d.get("title", ""), who, _date.fromisoformat(d["due"]), source=TG,
+                               company=d.get("co", ""), important=bool(d.get("imp")), repeat=d.get("rep", ""))
+        except (sv.NotAllowed, KeyError, ValueError) as e:
+            return _reply(chat_id, user, str(e))
+        return _reply(chat_id, user, T.NEW_OK.format(title=t.title, who=t.assignee.name, due=dates.day_month(t.due_date)))
     if kind == "nw" and s and s.state == "new_who":
         s.data["who"], s.state = arg, "new_due"
         s.save()

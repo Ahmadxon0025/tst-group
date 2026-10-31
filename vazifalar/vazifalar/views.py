@@ -75,7 +75,7 @@ def hafta(request):
     end = start + timedelta(days=6)
     base, who, company = _filters(request, me)
 
-    overdue = list(_with_counts(base.filter(status=Vazifa.YANGI, due_date__lt=today)).order_by("due_date"))
+    overdue = list(_with_counts(base.filter(status=Vazifa.YANGI, due_date__lt=today)).order_by("-important", "due_date"))
     for t in overdue:
         t.late_text = _late_text(t, today)
         t.dm = dates.day_month_short(t.due_date)
@@ -96,7 +96,7 @@ def hafta(request):
     for i in range(7):
         d = start + timedelta(days=i)
         on_day = by_day.get(d, [])
-        tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: t.created_at))
+        tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: (not t.important, t.created_at)))
         days.append({"iso": d.isoformat(), "dm": dates.day_month_short(d), "wd": cfg.DAY_LONG[d.weekday()],
                      "is_today": d == today, "is_past": d < today, "tasks": tasks,
                      "done_count": sum(1 for t in on_day if t.is_done)})
@@ -132,13 +132,13 @@ def mening(request):
     today = dates.today()
     mine = _with_counts(Vazifa.objects.filter(assignee=me).select_related("assignee", "created_by"))
     open_qs = mine.filter(status=Vazifa.YANGI)
-    overdue = list(open_qs.filter(due_date__lt=today).order_by("due_date"))
+    overdue = list(open_qs.filter(due_date__lt=today).order_by("-important", "due_date"))
     for t in overdue:
         t.late_text = _late_text(t, today)
     groups = [
         ("Kechikkan", "late", overdue),
-        ("Bugun", "today", list(open_qs.filter(due_date=today))),
-        ("Keyingi", "next", list(open_qs.filter(due_date__gt=today).order_by("due_date"))),
+        ("Bugun", "today", list(open_qs.filter(due_date=today).order_by("-important", "created_at"))),
+        ("Keyingi", "next", list(open_qs.filter(due_date__gt=today).order_by("due_date", "-important"))),
         ("Bajarilgan (7 kun)", "done",
          list(mine.filter(status=Vazifa.BAJARILDI, done_at__date__gte=today - timedelta(days=7))
               .order_by("-done_at"))),
@@ -212,17 +212,32 @@ def detail(request, pk: int):
 @login_required
 @require_POST
 def create(request):
+    """Add window. The title line may carry the details in plain Uzbek ("ertaga @ali #git !");
+    anything picked in the window itself wins over what was typed."""
+    from vazifalar.quick import parse_text
     me = request.account
-    assignee = UserAccount.objects.filter(username=request.POST.get("kim") or "", is_active=True).first()
+    raw = request.POST.get("title") or ""
+    parsed = parse_text(raw)
+    who = request.POST.get("kim") or parsed.who or ""
+    assignee = UserAccount.objects.filter(username=who, is_active=True).first()
+    due = _parse_date(request.POST.get("due")) or parsed.due or dates.today()
     try:
         if assignee is None:
             raise sv.NotAllowed("Kimga ekanini tanlang.")
-        sv.create_task(me, request.POST.get("title"), assignee, _parse_date(request.POST.get("due")),
-                       company=request.POST.get("company") or "")
+        sv.create_task(me, parsed.title or raw, assignee, due,
+                       company=request.POST.get("company") or parsed.company or "",
+                       important=bool(request.POST.get("important")) or parsed.important,
+                       repeat=request.POST.get("repeat") or parsed.repeat)
         messages.success(request, "Qo'shildi.")
     except sv.NotAllowed as e:
         messages.error(request, str(e))
     return redirect(_back(request))
+
+
+@login_required
+def quick_preview(request):
+    from vazifalar.quick import preview
+    return JsonResponse(preview(request.GET.get("q") or ""))
 
 
 @login_required
@@ -291,7 +306,9 @@ def save(request, pk):
     company = request.POST.get("company")
     sv.update_task(request.account, pk, title=request.POST.get("title"), assignee=who,
                    due_date=_parse_date(request.POST.get("due")),
-                   company=(company if company is not None else None))
+                   company=(company if company is not None else None),
+                   important=bool(request.POST.get("important")),
+                   repeat=request.POST.get("repeat", None))
     messages.success(request, "Saqlandi.")
 
 

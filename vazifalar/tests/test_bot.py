@@ -211,3 +211,30 @@ def test_rename_tells_the_assignee(tg, boss, ali):
     t = sv.create_task(boss, "Eski", ali, date(2026, 11, 2))
     sv.change_title(boss, t.pk, "Yangi")
     assert Outbox.objects.filter(chat_id=111, text__contains="Eski").filter(text__contains="Yangi").exists()
+
+
+def test_quick_add_from_telegram(tg, boss, ali):
+    linked(boss, 999)
+    handlers.handle_update(msg(999, "Hisobot ertaga @ali #tst !"))
+    assert Vazifa.objects.count() == 0                    # asks first
+    handlers.handle_update(cb(999, "qa:y"))
+    t = Vazifa.objects.get()
+    assert (t.title, t.assignee, t.company, t.important) == ("Hisobot", ali, "tst", True)
+    assert t.due_date == timezone.localdate() + timedelta(days=1) and t.events.first().source == "telegram"
+
+
+def test_quick_add_no_and_defaults_to_self(tg, boss):
+    linked(boss, 999)
+    handlers.handle_update(msg(999, "Bankka qo'ng'iroq"))
+    handlers.handle_update(cb(999, "qa:n"))
+    assert Vazifa.objects.count() == 0
+    handlers.handle_update(msg(999, "Bankka qo'ng'iroq"))
+    handlers.handle_update(cb(999, "qa:y"))
+    t = Vazifa.objects.get()
+    assert t.assignee == boss and t.due_date == timezone.localdate()
+
+
+def test_worker_message_is_not_a_task(tg, worker):
+    linked(worker, 555)
+    handlers.handle_update(msg(555, "salom"))
+    assert Vazifa.objects.count() == 0

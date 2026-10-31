@@ -36,6 +36,8 @@ def _co(task) -> str:
 
 def on_event(event) -> None:  # CORE: reusable — the one entry point from services
     task, actor, kind = event.vazifa, event.actor, event.kind
+    if event.source == "takror":
+        return                       # the next copy of a repeating task: it shows up in the 08:00 list
     key = f"ev:{event.pk}"
     due = dates.day_month(task.due_date)
     if kind == "yaratildi" and task.assignee_id != actor.pk:

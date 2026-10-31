@@ -1,7 +1,9 @@
 <dialog id="add">
   <form class="dlg" method="post" action="/vazifa/yangi/">{% csrf_token %}
     <input type="hidden" name="next" value="{{ here|default:request.get_full_path }}">
-    <textarea class="ttl" id="add-title" name="title" maxlength="300" required placeholder="Nima qilish kerak" aria-label="Nima qilish kerak"></textarea>
+    <textarea class="ttl" id="add-title" name="title" maxlength="300" required rows="2" placeholder="Masalan: NBU ma'lumotnoma ertaga @abdurazzoq #guruh !" aria-label="Nima qilish kerak"></textarea>
+    <div class="qa-chips" id="qa-chips" aria-live="polite"></div>
+    <p class="qa-hint">Yozishda: <b>ertaga</b>, <b>juma</b>, <b>5-noyabr</b>, <b>@ism</b>, <b>#kompaniya</b>, <b>!</b> (muhim), <b>har dushanba</b> (takror)</p>
     <div><span class="lbl">Kim</span>
       <div class="pick">{% for p in side_people %}<label style="--p:{{ p.color }}"><input type="radio" name="kim" value="{{ p.username }}" required{% if default_assignee == p.username %} checked{% endif %}><span><span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{{ p.name }}</span></label>{% endfor %}</div></div>
     <div><span class="lbl">Qachongacha</span>
@@ -11,11 +13,20 @@
         <button type="button" data-add="7">1 haftada</button>
         <input id="add-due" type="date" name="due" required aria-label="Sana">
       </div></div>
-    <div><span class="lbl">Kompaniya (ixtiyoriy)</span>
-      <div class="pick co-pick">
-        <label style="--p:var(--muted)"><input type="radio" name="company" value=""{% if not default_company %} checked{% endif %}><span>Yo'q</span></label>
-        {% for k, label in companies %}<label style="--p:var(--accent)"><input type="radio" name="company" value="{{ k }}"{% if default_company == k %} checked{% endif %}><span class="keep">{{ label }}</span></label>{% endfor %}
-      </div></div>
+    <div class="qa-row">
+      <div><span class="lbl">Kompaniya</span>
+        <div class="pick co-pick">
+          <label style="--p:var(--muted)"><input type="radio" name="company" value=""{% if not default_company %} checked{% endif %}><span>Yo'q</span></label>
+          {% for k, label in companies %}<label style="--p:var(--accent)"><input type="radio" name="company" value="{{ k }}"{% if default_company == k %} checked{% endif %}><span class="keep">{{ label }}</span></label>{% endfor %}
+        </div></div>
+    </div>
+    <div class="qa-row">
+      <label class="chk"><input type="checkbox" name="important" id="add-imp"> <span>❗ Muhim</span></label>
+      <label class="qa-rep"><span class="lbl" style="margin:0">Takrorlash</span>
+        <select name="repeat" id="add-rep">
+          <option value="">Yo'q</option><option value="daily">Har kuni</option><option value="weekly">Har hafta</option><option value="monthly">Har oy</option>
+        </select></label>
+    </div>
     <div class="acts">
       <button class="btn" type="button" onclick="document.getElementById('add').close()">Bekor</button>
       <button class="btn pri" type="submit">Qo'shish</button>
@@ -25,11 +36,30 @@
 <script>
 (function(){
   var d=document.getElementById('add'),due=document.getElementById('add-due'),today='{{ today_iso }}';
+  var title=document.getElementById('add-title'),chips=document.getElementById('qa-chips');
   function iso(base,n){var t=new Date(base+'T12:00:00');t.setDate(t.getDate()+n);return t.toISOString().slice(0,10);}
   function mark(){d.querySelectorAll('[data-add]').forEach(function(b){b.classList.toggle('on',iso(today,+b.dataset.add)===due.value);});}
   d.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){due.value=iso(today,+b.dataset.add);mark();};});
   due.onchange=mark;
-  window.openAdd=function(v){due.value=v||today;mark();d.showModal();document.getElementById('add-title').focus();};
+  window.openAdd=function(v){due.value=v||today;mark();chips.innerHTML='';d.showModal();title.focus();};
   d.addEventListener('click',function(e){if(e.target===d)d.close();});
+  title.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();d.querySelector('form').requestSubmit();}});
+  function chip(t,cls){return '<span class="qa-chip '+(cls||'')+'">'+t.replace(/</g,'&lt;')+'</span>';}
+  var timer;
+  title.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(function(){
+    fetch('/vazifa/tahlil/?q='+encodeURIComponent(title.value),{credentials:'same-origin'}).then(function(r){return r.json();}).then(function(j){
+      var h='';
+      if(j.due){due.value=j.due;mark();h+=chip('📅 '+j.due_label);}
+      if(j.who){var r=d.querySelector('input[name=kim][value="'+j.who+'"]');if(r)r.checked=true;h+=chip('👤 '+j.who_name);}
+      if(j.company){var c=d.querySelector('input[name=company][value="'+j.company+'"]');if(c)c.checked=true;h+=chip('#'+j.company_label,'keep');}
+      document.getElementById('add-imp').checked=!!j.important||document.getElementById('add-imp').dataset.manual==='1'&&document.getElementById('add-imp').checked;
+      if(j.important)h+=chip('❗ Muhim','imp');
+      var rep=document.getElementById('add-rep');
+      if(j.repeat){if(!rep.querySelector('option[value="'+j.repeat+'"]')){var o=document.createElement('option');o.value=j.repeat;o.textContent=j.repeat_label;rep.appendChild(o);}rep.value=j.repeat;h+=chip('🔁 '+j.repeat_label);}
+      chips.innerHTML=h;
+      if(window.toCyrillic&&document.documentElement.dataset.script==='cyrl'){chips.querySelectorAll('.qa-chip:not(.keep)').forEach(function(s){s.textContent=window.toCyrillic(s.textContent);});}
+    }).catch(function(){});
+  },250);});
+  document.getElementById('add-imp').addEventListener('change',function(){this.dataset.manual='1';});
 })();
 </script>

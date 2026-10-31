@@ -26,18 +26,34 @@ class Vazifa(LedgerModel):  # CORE: reusable
     due_date = models.DateField()
     status = models.CharField(max_length=12, choices=STATUSES, default=YANGI)
     company = models.CharField(max_length=20, blank=True, default="")     # key from CONFIG COMPANIES, optional
+    important = models.BooleanField(default=False)                         # "Muhim": shown first, red
+    repeat = models.CharField(max_length=20, blank=True, default="")      # "", daily, weekly[:wd], monthly[:day]
+    repeat_of = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT,
+                                  related_name="next_repeats")             # the task this one repeats
     created_by = models.ForeignKey(UserAccount, on_delete=models.PROTECT, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
     done_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "vazifa"
-        ordering = ["due_date", "created_at"]
+        ordering = ["due_date", "-important", "created_at"]
         indexes = [models.Index(fields=["assignee", "status", "due_date"]),
                    models.Index(fields=["status", "due_date"])]
 
     def __str__(self):
         return f"#{self.pk} {self.title}"
+
+    @property
+    def repeat_label(self) -> str:
+        from config import values as cfg
+        kind, _, arg = (self.repeat or "").partition(":")
+        if kind == "daily":
+            return "Har kuni"
+        if kind == "weekly":
+            return f"Har {cfg.DAY_LONG[int(arg)].lower()}" if arg else "Har hafta"
+        if kind == "monthly":
+            return f"Har oy {arg}-kuni" if arg else "Har oy"
+        return ""
 
     @property
     def company_label(self) -> str:
@@ -62,12 +78,16 @@ class VazifaEvent(AppendOnlyModel):  # CORE: reusable — the task's history, wr
     KIMGA = "kimga"
     NOM = "nom"
     KOMPANIYA = "kompaniya"
+    MUHIM = "muhim"
+    TAKROR = "takror"
     IZOH = "izoh"
     KINDS = [(YARATILDI, "Yaratildi"), (BAJARILDI, "Bajarildi"), (QAYTA_OCHILDI, "Qayta ochildi"),
              (BEKOR, "O'chirildi"), (MUDDAT, "Muddat o'zgardi"), (KIMGA, "Boshqaga o'tkazildi"), (NOM, "Nomi o'zgardi"),
-             (KOMPANIYA, "Kompaniya o'zgardi"), (IZOH, "Izoh")]
+             (KOMPANIYA, "Kompaniya o'zgardi"), (MUHIM, "Muhimlik o'zgardi"), (TAKROR, "Takrorlash o'zgardi"),
+             (IZOH, "Izoh")]
     WEB = "web"
     TELEGRAM = "telegram"
+    REPEAT = "takror"      # created automatically when a repeating task was closed
 
     id = models.BigAutoField(primary_key=True)
     vazifa = models.ForeignKey(Vazifa, on_delete=models.PROTECT, related_name="events")

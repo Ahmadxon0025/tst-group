@@ -245,3 +245,10 @@ def test_edit_window_and_save(client, boss, ali):
     client.post(f"/vazifa/{t.pk}/bekor/", {"next": "/"})
     t.refresh_from_db()
     assert t.status == "bekor"
+
+
+def test_app_manifest_and_service_worker(client):
+    m = client.get("/manifest.webmanifest")
+    assert m.status_code == 200 and m.json()["display"] == "standalone"
+    sw = client.get("/sw.js")
+    assert sw.status_code == 200 and sw["Service-Worker-Allowed"] == "/"

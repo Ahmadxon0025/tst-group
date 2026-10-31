@@ -42,5 +42,10 @@ DUE_TODAY = "Bugun"
 DUE_TOMORROW = "Ertaga"
 DUE_WEEK = "1 haftada"
 NO_COMPANY = "Yo'q"
+QUICK_ASK = "Shu vazifani qo'shaymi?\n\n{title}\n👤 {who} · 📅 {due}{extra}"
+QUICK_YES = "✅ Qo'shish"
+QUICK_NO = "✖️ Yo'q"
+QUICK_EMPTY = "Vazifa matnini yozing. Masalan: NBU ma'lumotnoma ertaga @abdurazzoq #guruh !"
 HELP = ("Buyruqlar:\n/bugun — bugungi va kechikkan vazifalar\n/hafta — keyingi 7 kun\n"
-        "/kechikkan — kechikkanlar\n/yangi — yangi vazifa qo'shish")
+        "/kechikkan — kechikkanlar\n/yangi — yangi vazifa qo'shish\n\n"
+        "Tez qo'shish: shunchaki yozing, masalan «Hisobot ertaga @abdurazzoq #tst !» yoki «Kassa har dushanba»")
