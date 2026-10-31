@@ -4,6 +4,8 @@ from functools import wraps
 from django.shortcuts import redirect
 
 SESSION_KEY = "user_account_id"
+EPOCH_KEY = "user_account_epoch"
+OPEN_WHILE_MUST_CHANGE = ("/parol/", "/chiqish/", "/static/", "/sw.js", "/manifest.webmanifest")
 
 
 class UserMiddleware:  # CORE: reusable
@@ -16,9 +18,13 @@ class UserMiddleware:  # CORE: reusable
         request.account = None
         uid = request.session.get(SESSION_KEY)
         if uid:
-            request.account = UserAccount.objects.filter(pk=uid, is_active=True).first()
-            if request.account is None:
-                request.session.flush()
+            acc = UserAccount.objects.filter(pk=uid, is_active=True).first()
+            if acc is None or request.session.get(EPOCH_KEY, 0) != acc.session_epoch:
+                request.session.flush()            # blocked, or password reset → signed out everywhere
+            else:
+                request.account = acc
+                if acc.must_change_password and not request.path.startswith(OPEN_WHILE_MUST_CHANGE):
+                    return redirect("/parol/")
         return self.get_response(request)
 
 

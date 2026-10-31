@@ -20,6 +20,8 @@ class Command(BaseCommand):
             raise CommandError(f"no such person: {username}")
         pw = secrets.token_urlsafe(8)
         u.set_password(pw)
-        u.save(update_fields=["password_hash"])
+        u.must_change_password = True
+        u.session_epoch += 1
+        u.save(update_fields=["password_hash", "must_change_password", "session_epoch"])
         audit.write("server", "parol_tiklandi", "user_account", u.pk)
         self.stdout.write(f"{u.username}: {pw}")

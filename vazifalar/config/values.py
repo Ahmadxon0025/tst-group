@@ -8,6 +8,8 @@ PRODUCT_TITLE = "TST Vazifalar"
 # bosh:    creates, sees and manages every task.
 # menejer: creates tasks for anyone; sees tasks given to him and tasks he gave; manages the tasks he gave.
 # xodim:   sees and closes only his own tasks (for later, when floor staff join).
+ROLE_LABELS = {"bosh": "Bosh direktor", "menejer": "Menejer", "xodim": "Xodim"}
+
 ROLES = {
     "bosh": {"can_create": True, "sees_all": True},
     "menejer": {"can_create": True, "sees_all": False},

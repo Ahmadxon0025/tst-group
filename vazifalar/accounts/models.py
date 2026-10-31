@@ -18,6 +18,9 @@ class UserAccount(LedgerModel):  # CORE: reusable
     is_active = models.BooleanField(default=True)
     telegram_user_id = models.BigIntegerField(null=True, blank=True, unique=True)   # linked by the bot step
     script = models.CharField(max_length=4, default="latn")    # "latn" or "cyrl" — the person's choice
+    session_epoch = models.PositiveIntegerField(default=0)     # moves on at a reset/block: every device signs out
+    must_change_password = models.BooleanField(default=False)  # a one-time password was given: choose your own
+    last_login_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

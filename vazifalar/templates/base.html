@@ -37,6 +37,7 @@
     {% endfor %}
     <div class="bottom">
       <form method="post" action="/yozuv/">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="keep">{% if me.is_cyrl %}Lotincha yozuv{% else %}Кирилл ёзув{% endif %}</button></form>
+      {% if me.sees_all %}<a class="nav-i{% if request.path == '/odamlar/' %} on{% endif %}" href="/odamlar/" style="color:var(--muted)">Odamlar va parollar</a>{% endif %}
       <a class="nav-i" href="/parol/" style="color:var(--muted)">Parolni o'zgartirish</a>
       <form method="post" action="/chiqish/">{% csrf_token %}<button type="submit">Chiqish</button></form>
     </div>

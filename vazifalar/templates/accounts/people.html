@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Odamlar{% endblock %}
+{% block body %}
+<div class="page wide">
+  <div class="head"><div><h1>Odamlar</h1><div class="sub">Login, parol, lavozim, bloklash. Faqat siz ko'rasiz.</div></div></div>
+
+  {% if shown_pw %}
+  <section class="pwbox" role="alert">
+    <div><b>{{ shown.name }}</b>{% if shown_new %} qo'shildi.{% else %} uchun yangi parol.{% endif %}
+      Uni o'ziga shaxsan bering — bu parol <b>faqat hozir</b> ko'rinadi. Birinchi kirishda u o'z parolini qo'yadi.</div>
+    <div class="pwrow"><span>Login: <code class="keep">{{ shown.username }}</code></span>
+      <span>Parol: <code class="keep" id="pw">{{ shown_pw }}</code></span>
+      <button class="btn" type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText('Login: {{ shown.username }}\nParol: {{ shown_pw }}\n{{ request.scheme }}://{{ request.get_host }}');this.textContent='Nusxa olindi ✓'">Nusxa olish</button></div>
+  </section>
+  {% endif %}
+
+  <table class="ppl">
+    <thead><tr><th>Ism</th><th>Login</th><th>Lavozim</th><th>Telegram</th><th>Oxirgi kirish</th><th></th></tr></thead>
+    <tbody>
+    {% for p in people_all %}
+      <tr class="{% if not p.is_active %}off{% endif %}">
+        <td><span class="who"><span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{{ p.name }}</span>{% if not p.is_active %} <span class="badge-off">bloklangan</span>{% endif %}{% if p.must_change_password and p.is_active %} <span class="badge-new">parol hali o'zgarmagan</span>{% endif %}</td>
+        <td><code class="keep">{{ p.username }}</code></td>
+        <td>{% for k, label in roles %}{% if k == p.role %}{{ label }}{% endif %}{% endfor %}</td>
+        <td>{% if p.telegram_user_id %}✓ ulangan{% else %}<span class="none">yo'q</span>{% endif %}</td>
+        <td>{% if p.last_login_at %}{{ p.last_login_at|date:"d.m H:i" }}{% else %}<span class="none">hali yo'q</span>{% endif %}</td>
+        <td class="acts">
+          <details class="pmenu"><summary class="btn">Amallar</summary>
+            <div class="pmenu-body">
+              <form method="post" action="/odamlar/{{ p.username }}/parol/" onsubmit="return confirm('{{ p.name }} uchun yangi parol yaratilsinmi? Eski parol ishlamay qoladi.')">{% csrf_token %}<button class="btn" type="submit">Yangi parol</button></form>
+              <form class="pedit" method="post" action="/odamlar/{{ p.username }}/tahrir/">{% csrf_token %}
+                <input type="text" name="name" value="{{ p.name }}" required aria-label="Ism">
+                <select name="role" aria-label="Lavozim">{% for k, label in roles %}<option value="{{ k }}"{% if k == p.role %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                <button class="btn" type="submit">Saqlash</button></form>
+              {% if p.telegram_user_id %}<form method="post" action="/odamlar/{{ p.username }}/telegram/" onsubmit="return confirm('Telegram uzilsinmi? U qayta ulashi kerak bo\'ladi.')">{% csrf_token %}<button class="btn" type="submit">Telegramni uzish</button></form>{% endif %}
+              {% if p.pk != me.pk %}
+                {% if p.is_active %}<form method="post" action="/odamlar/{{ p.username }}/blok/" onsubmit="return confirm('{{ p.name }} bloklansinmi? U darhol tizimdan chiqariladi. Vazifalari saqlanadi.')">{% csrf_token %}<button class="btn danger" type="submit">Bloklash</button></form>
+                {% else %}<form method="post" action="/odamlar/{{ p.username }}/faol/">{% csrf_token %}<button class="btn" type="submit">Qayta faollashtirish</button></form>{% endif %}
+              {% endif %}
+            </div>
+          </details>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <section class="sect">
+    <h2>Yangi odam qo'shish</h2>
+    <form class="row" method="post" action="/odamlar/">{% csrf_token %}
+      <input type="text" name="name" placeholder="Ism (masalan: Shuxrat)" required aria-label="Ism">
+      <input type="text" name="username" placeholder="login (masalan: shuxrat)" required pattern="[a-z][a-z0-9_]{2,29}" autocapitalize="none" aria-label="Login" class="keep">
+      <select name="role" aria-label="Lavozim" style="height:32px;border:1px solid var(--card-line);border-radius:6px;background:var(--card)">{% for k, label in roles %}<option value="{{ k }}"{% if k == 'menejer' %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <button class="btn pri" type="submit">Qo'shish</button>
+    </form>
+    <p class="none">Lavozimlar: <b>Bosh direktor</b> — hamma narsani ko'radi va boshqaradi. <b>Menejer</b> — har kimga vazifa beradi, o'ziga berilgan va o'zi bergan vazifalarni ko'radi. <b>Xodim</b> — faqat o'z vazifalarini ko'radi va yopadi.</p>
+  </section>
+</div>
+{% endblock %}

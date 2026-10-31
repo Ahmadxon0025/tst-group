@@ -283,3 +283,25 @@ details.manage .row+.row{margin-top:8px}
 .col.inbox .ch{color:var(--muted)}
 .col.inbox{background:color-mix(in srgb,var(--hover) 60%,transparent);border-radius:10px;padding:8px 8px 4px;margin:-8px 0 0 -8px}
 .inbox-hint{font-size:12px}
+/* ---- People page ---- */
+.ppl{width:100%;border-collapse:collapse;margin-top:18px}
+.ppl th{text-align:left;font-size:12px;color:var(--muted);font-weight:500;padding:6px;border-bottom:1px solid var(--line)}
+.ppl td{padding:10px 6px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}
+.ppl tr.off td{opacity:.55}
+.ppl code{font-size:13px}
+.ppl td.acts{text-align:right;width:1%;white-space:nowrap}
+.pmenu{position:relative;display:inline-block}
+.pmenu summary{list-style:none}
+.pmenu summary::-webkit-details-marker{display:none}
+.pmenu-body{position:absolute;right:0;top:38px;z-index:5;background:var(--card);border:1px solid var(--card-line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.pmenu-body form{margin:0;display:flex;gap:6px}
+.pedit input,.pedit select{height:32px;border:1px solid var(--card-line);border-radius:6px;padding:0 8px;background:var(--card);font-size:13px;min-width:0}
+.pedit input{flex:1}
+.badge-off,.badge-new{font-size:11px;border-radius:999px;padding:1px 8px;margin-left:6px}
+.badge-off{background:#FBEAE8;color:var(--red)}
+.badge-new{background:var(--accent-soft);color:var(--accent)}
+.pwbox{margin-top:18px;padding:14px 16px;border:2px solid var(--green);border-radius:10px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.pwrow{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.pwrow code{font-size:16px;font-weight:600;padding:2px 8px;background:var(--hover);border-radius:6px}
+.pwnote{padding:10px 12px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:14px}
+@media (max-width:760px){.ppl th:nth-child(5),.ppl td:nth-child(5),.ppl th:nth-child(2),.ppl td:nth-child(2){display:none}.pmenu-body{min-width:240px}}

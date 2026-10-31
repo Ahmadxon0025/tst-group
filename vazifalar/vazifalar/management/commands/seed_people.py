@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  bor: {p['username']}")
                 continue
             pw = secrets.token_urlsafe(8)
-            u = UserAccount(username=p["username"], name=p["name"], role=p["role"])
+            u = UserAccount(username=p["username"], name=p["name"], role=p["role"], must_change_password=True)
             u.set_password(pw)
             u.save()
             audit.write("system", "odam_qoshildi", "user_account", u.pk, new={"username": u.username, "role": u.role})
