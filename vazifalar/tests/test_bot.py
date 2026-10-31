@@ -203,3 +203,11 @@ def test_backup_goes_only_to_linked_bosh(monkeypatch, tmp_path, boss, ali):
     f.write_bytes(b"x" * 100)
     call_command("send_backup", str(f))
     assert sent == [999]
+
+
+
+def test_rename_tells_the_assignee(tg, boss, ali):
+    linked(ali, 111)
+    t = sv.create_task(boss, "Eski", ali, date(2026, 11, 2))
+    sv.change_title(boss, t.pk, "Yangi")
+    assert Outbox.objects.filter(chat_id=111, text__contains="Eski").filter(text__contains="Yangi").exists()

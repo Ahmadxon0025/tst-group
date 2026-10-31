@@ -7,7 +7,7 @@ Rules:
 - The task's creator or a sees_all person cancels, re-dates or hands it to someone else ("manage").
 - The assignee, the creator or a sees_all person marks it done, reopens it, or comments ("touch").
 - A person sees tasks given to him and tasks he gave; a sees_all person sees everything.
-- A cancel needs a reason. A cancelled task cannot be changed again (it stays in history).
+- "Delete" is a cancel: the task leaves the board but stays in history (a reason is optional).
 - Each write = state change + VazifaEvent + AuditLog, in one transaction.
 """
 from datetime import date
@@ -94,7 +94,7 @@ def mark_done(actor: UserAccount, task_id: int, source: str = VazifaEvent.WEB) -
         if not can_touch(actor, task):
             raise NotAllowed("Bu vazifa sizniki emas.")
         if task.status == Vazifa.BEKOR:
-            raise NotAllowed("Bekor qilingan vazifa.")
+            raise NotAllowed("O'chirilgan vazifa.")
         if task.status == Vazifa.BAJARILDI:
             return task                          # pressed twice: nothing new happens
         task.status, task.done_at = Vazifa.BAJARILDI, timezone.now()
@@ -121,13 +121,11 @@ def reopen(actor: UserAccount, task_id: int, source: str = VazifaEvent.WEB) -> V
 
 
 def cancel(actor: UserAccount, task_id: int, reason: str, source: str = VazifaEvent.WEB) -> Vazifa:  # CORE
-    reason = " ".join((reason or "").split())
-    if len(reason) < cfg.CANCEL_REASON_MIN:
-        raise NotAllowed("Bekor qilish sababini yozing.")
+    reason = " ".join((reason or "").split()) or cfg.DELETE_REASON_DEFAULT
     with transaction.atomic():
         task = _locked(task_id)
         if not can_manage(actor, task):
-            raise NotAllowed("Bu vazifani faqat uni bergan odam yoki bosh direktor bekor qila oladi.")
+            raise NotAllowed("Bu vazifani faqat uni bergan odam yoki bosh direktor o'chira oladi.")
         if task.status == Vazifa.BEKOR:
             return task
         old = task.status
@@ -148,7 +146,7 @@ def change_due(actor: UserAccount, task_id: int, new_due: date, source: str = Va
         if not can_manage(actor, task):
             raise NotAllowed("Muddatni faqat vazifani bergan odam yoki bosh direktor o'zgartira oladi.")
         if task.status == Vazifa.BEKOR:
-            raise NotAllowed("Bekor qilingan vazifa.")
+            raise NotAllowed("O'chirilgan vazifa.")
         if task.due_date == new_due:
             return task
         old = task.due_date
@@ -169,7 +167,7 @@ def reassign(actor: UserAccount, task_id: int, new_assignee: UserAccount,
         if not can_manage(actor, task):
             raise NotAllowed("Vazifani faqat uni bergan odam yoki bosh direktor boshqaga o'tkaza oladi.")
         if task.status == Vazifa.BEKOR:
-            raise NotAllowed("Bekor qilingan vazifa.")
+            raise NotAllowed("O'chirilgan vazifa.")
         if task.assignee_id == new_assignee.pk:
             return task
         old = task.assignee
@@ -178,6 +176,48 @@ def reassign(actor: UserAccount, task_id: int, new_assignee: UserAccount,
         _event(task, VazifaEvent.KIMGA, actor, source, old_assignee=old, new_assignee=new_assignee)
         audit.write(actor.username, "vazifa_kimga", "vazifa", task.pk,
                     old={"assignee": old.username}, new={"assignee": new_assignee.username})
+    return task
+
+
+def change_title(actor: UserAccount, task_id: int, title: str, source: str = VazifaEvent.WEB) -> Vazifa:
+    # CORE: reusable
+    title = " ".join((title or "").split())
+    if not title:
+        raise NotAllowed("Nima qilish kerakligini yozing.")
+    if len(title) > cfg.TASK_TITLE_MAX:
+        raise NotAllowed(f"Matn {cfg.TASK_TITLE_MAX} belgidan oshmasin.")
+    with transaction.atomic():
+        task = _locked(task_id)
+        if not can_manage(actor, task):
+            raise NotAllowed("Nomini faqat vazifani bergan odam yoki bosh direktor o'zgartira oladi.")
+        if task.status == Vazifa.BEKOR:
+            raise NotAllowed("O'chirilgan vazifa.")
+        if task.title == title:
+            return task
+        old = task.title
+        task.title = title
+        task.save(update_fields=["title"])
+        _event(task, VazifaEvent.NOM, actor, source, note=old)
+        audit.write(actor.username, "vazifa_nom", "vazifa", task.pk, old={"title": old}, new={"title": title})
+    return task
+
+
+def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, due_date=None, company=None,
+                source: str = VazifaEvent.WEB) -> Vazifa:  # CORE: reusable — the edit window's "Saqlash"
+    """Applies only what changed, all in one transaction; each change is its own history line."""
+    with transaction.atomic():
+        task = Vazifa.objects.select_for_update().get(pk=task_id)
+        if not can_manage(actor, task):
+            raise NotAllowed("Vazifani faqat uni bergan odam yoki bosh direktor o'zgartira oladi.")
+        if title is not None and " ".join(title.split()) != task.title:
+            change_title(actor, task_id, title, source)
+        if assignee is not None and assignee.pk != task.assignee_id:
+            reassign(actor, task_id, assignee, source)
+        if due_date is not None and due_date != task.due_date:
+            change_due(actor, task_id, due_date, source)
+        if company is not None and company != task.company:
+            set_company(actor, task_id, company)
+        task.refresh_from_db()
     return task
 
 

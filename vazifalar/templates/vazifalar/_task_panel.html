@@ -1,0 +1,64 @@
+<div class="tp" data-today="{{ today_iso }}">
+  <div class="tp-top">
+    <span class="status {{ t.status }}">{{ t.get_status_display }}</span>
+    {% if partial %}<button type="button" class="tp-x js-close" aria-label="Yopish">×</button>{% endif %}
+  </div>
+
+  {% if can_manage and t.status != 'bekor' %}
+  <form class="tp-edit" method="post" action="/vazifa/{{ t.pk }}/saqlash/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+    <div class="tp-titlerow">
+      <button class="tick big{% if t.is_done %} on{% endif %}" type="submit" formaction="/vazifa/{{ t.pk }}/belgi/" formnovalidate aria-label="{% if t.is_done %}Qayta ochish{% else %}Bajarildi{% endif %}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3L9.5 3.8"/></svg></button>
+      <textarea class="tp-title" name="title" maxlength="300" rows="2" required aria-label="Vazifa">{{ t.title }}</textarea>
+    </div>
+    <div class="tp-grid">
+      <label class="tp-f"><span>Kim</span>
+        <select name="kim">{% for p in people %}<option value="{{ p.username }}"{% if p.pk == t.assignee_id %} selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></label>
+      <div class="tp-f"><span>Muddat</span>
+        <div class="tp-date"><input type="date" name="due" value="{{ t.due_date|date:'Y-m-d' }}" required aria-label="Muddat">
+          <button type="button" data-setdate="0">Bugun</button><button type="button" data-setdate="1">Ertaga</button><button type="button" data-setdate="7">+1 hafta</button></div></div>
+      <label class="tp-f"><span>Kompaniya</span>
+        <select name="company"><option value="">Yo'q</option>{% for k, label in companies %}<option value="{{ k }}"{% if t.company == k %} selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <div class="tp-f"><span>Bergan</span><b>{{ t.created_by.name }}</b></div>
+    </div>
+    <div class="tp-actions">
+      <button class="btn danger" type="submit" formaction="/vazifa/{{ t.pk }}/bekor/" formnovalidate onclick="return confirm('Vazifani o\'chirasizmi? Tarixda saqlanib qoladi.')">O'chirish</button>
+      <span class="sp"></span>
+      <button class="btn pri" type="submit">Saqlash</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="tp-titlerow">
+    {% if can_touch and t.status != 'bekor' %}
+    <form method="post" action="/vazifa/{{ t.pk }}/belgi/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+      <button class="tick big{% if t.is_done %} on{% endif %}" type="submit" aria-label="{% if t.is_done %}Qayta ochish{% else %}Bajarildi{% endif %}"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3L9.5 3.8"/></svg></button></form>
+    {% endif %}
+    <h1 class="tp-h">{{ t.title }}</h1>
+  </div>
+  <div class="tp-grid">
+    <div class="tp-f"><span>Kim</span><b><span class="av xs" style="--p:{{ t.assignee.color }}">{{ t.assignee.initial }}</span> {{ t.assignee.name }}</b></div>
+    <div class="tp-f"><span>Muddat</span><b>{{ due_dm }}</b></div>
+    <div class="tp-f"><span>Kompaniya</span><b class="keep">{{ t.company_label|default:"—" }}</b></div>
+    <div class="tp-f"><span>Bergan</span><b>{{ t.created_by.name }}</b></div>
+  </div>
+  {% if t.status != 'bekor' %}<p class="none">Muddat yoki nomini faqat vazifani bergan odam o'zgartiradi.</p>{% endif %}
+  {% endif %}
+
+  {% if can_touch and t.status != 'bekor' %}
+  <form class="tp-comment" method="post" action="/vazifa/{{ t.pk }}/izoh/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+    <textarea name="text" maxlength="2000" rows="2" required placeholder="Izoh yozing…" aria-label="Izoh"></textarea>
+    <button class="btn" type="submit">Izoh qo'shish</button>
+  </form>
+  {% endif %}
+
+  <div class="tp-hist">
+    <h2>Tarix</h2>
+    <ul class="hist">
+      {% for e in events reversed %}
+      <li><span class="av xs" style="--p:{{ e.actor.color }}">{{ e.actor.initial }}</span>
+        <div class="txt"><span><b>{{ e.actor.name }}</b> — {{ e.get_kind_display|lower }}{% if e.source == 'telegram' %} (Telegram){% endif %}{% if e.kind == 'muddat' %}: {{ e.old_due|date:'d.m' }} → {{ e.new_due|date:'d.m' }}{% endif %}{% if e.kind == 'kimga' %}: {{ e.old_assignee.name }} → {{ e.new_assignee.name }}{% endif %}{% if e.kind == 'yaratildi' and e.new_assignee %} ({{ e.new_assignee.name }}ga){% endif %}</span>
+          {% if e.kind == 'nom' %}<div class="note">Oldin: {{ e.note }}</div>{% elif e.note %}<div class="note">{{ e.note|linebreaksbr }}</div>{% endif %}
+          <small>{{ e.when }}</small></div></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>

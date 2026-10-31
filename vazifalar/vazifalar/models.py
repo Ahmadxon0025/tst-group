@@ -18,7 +18,7 @@ class Vazifa(LedgerModel):  # CORE: reusable
     YANGI = "yangi"
     BAJARILDI = "bajarildi"
     BEKOR = "bekor"
-    STATUSES = [(YANGI, "Yangi"), (BAJARILDI, "Bajarildi"), (BEKOR, "Bekor qilindi")]
+    STATUSES = [(YANGI, "Yangi"), (BAJARILDI, "Bajarildi"), (BEKOR, "O'chirildi")]
 
     id = models.BigAutoField(primary_key=True)          # short number: fits a Telegram button
     title = models.CharField(max_length=300)
@@ -60,10 +60,11 @@ class VazifaEvent(AppendOnlyModel):  # CORE: reusable — the task's history, wr
     BEKOR = "bekor"
     MUDDAT = "muddat"
     KIMGA = "kimga"
+    NOM = "nom"
     KOMPANIYA = "kompaniya"
     IZOH = "izoh"
     KINDS = [(YARATILDI, "Yaratildi"), (BAJARILDI, "Bajarildi"), (QAYTA_OCHILDI, "Qayta ochildi"),
-             (BEKOR, "Bekor qilindi"), (MUDDAT, "Muddat o'zgardi"), (KIMGA, "Boshqaga o'tkazildi"),
+             (BEKOR, "O'chirildi"), (MUDDAT, "Muddat o'zgardi"), (KIMGA, "Boshqaga o'tkazildi"), (NOM, "Nomi o'zgardi"),
              (KOMPANIYA, "Kompaniya o'zgardi"), (IZOH, "Izoh")]
     WEB = "web"
     TELEGRAM = "telegram"

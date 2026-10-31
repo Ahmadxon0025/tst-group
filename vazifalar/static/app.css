@@ -207,3 +207,36 @@ details.manage .row+.row{margin-top:8px}
 }
 .co-pick label>span{padding:4px 12px}
 .pw{height:38px;border:1px solid var(--card-line);border-radius:8px;padding:0 10px;background:transparent;width:100%}
+
+/* ---- edit window + drag ---- */
+.card.movable{cursor:grab}
+.card.dragging{opacity:.4}
+.col.drop{outline:2px dashed var(--accent);outline-offset:6px;border-radius:8px}
+.taskdlg{width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 48px);overflow:auto;padding:0}
+.tp{padding:20px 22px;display:flex;flex-direction:column;gap:16px}
+.page .tp{padding:18px 0}
+.tp-top{display:flex;align-items:center;justify-content:space-between}
+.tp-x{border:none;background:none;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;padding:0 4px}
+.tp-titlerow{display:flex;gap:12px;align-items:flex-start}
+.tp-titlerow form{margin:0}
+.tick.big{flex:0 0 24px;width:24px;height:24px;margin-top:6px}
+.tp-title{flex:1;border:1px solid transparent;border-radius:8px;padding:4px 8px;font-size:19px;font-weight:600;line-height:1.35;background:transparent;resize:vertical;min-height:44px}
+.tp-title:hover,.tp-title:focus{border-color:var(--card-line)}
+.tp-h{margin:4px 0 0;font-size:20px;line-height:1.35}
+.tp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 18px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tp-f{display:flex;flex-direction:column;gap:5px;font-size:13px}
+.tp-f>span{color:var(--muted);font-size:12px;font-weight:500}
+.tp-f b{font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.tp-f select,.tp-f input{height:34px;border:1px solid var(--card-line);border-radius:6px;padding:0 8px;background:var(--card);font-size:14px}
+.tp-date{display:flex;flex-wrap:wrap;gap:6px}
+.tp-date button{height:34px;padding:0 10px;border:1px solid var(--card-line);border-radius:6px;background:transparent;cursor:pointer;font-size:13px}
+.tp-date button:hover{border-color:var(--accent);color:var(--accent)}
+.tp-actions{display:flex;align-items:center;gap:8px;margin-top:12px}
+.tp-actions .sp{flex:1}
+.tp-comment{display:flex;flex-direction:column;gap:8px}
+.tp-comment textarea{width:100%;border:1px solid var(--card-line);border-radius:8px;padding:8px 10px;background:transparent;resize:vertical}
+.tp-comment .btn{align-self:flex-start}
+.tp-hist h2{margin:0 0 10px;font-size:14px}
+@media (max-width:760px){.tp-grid{grid-template-columns:1fr}}
+.msgs[hidden]{display:none!important}
+.tp-date input{flex:1 1 150px}.tp-date button{flex:0 0 auto}

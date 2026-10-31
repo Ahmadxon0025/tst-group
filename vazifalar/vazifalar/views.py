@@ -4,7 +4,7 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.db.models import Count, Q
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -80,6 +80,12 @@ def hafta(request):
         t.late_text = _late_text(t, today)
         t.dm = dates.day_month_short(t.due_date)
 
+    def mark(ts):
+        for t in ts:
+            t.movable = sv.can_manage(me, t) and t.is_open
+        return ts
+    mark(overdue)
+
     week = (_with_counts(base.filter(due_date__range=(start, end)))
             .exclude(status=Vazifa.YANGI, due_date__lt=today))   # open past tasks live in Kechikkan only
     by_day = {}
@@ -90,7 +96,7 @@ def hafta(request):
     for i in range(7):
         d = start + timedelta(days=i)
         on_day = by_day.get(d, [])
-        tasks = sorted((t for t in on_day if not t.is_done), key=lambda t: t.created_at)
+        tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: t.created_at))
         days.append({"iso": d.isoformat(), "dm": dates.day_month_short(d), "wd": cfg.DAY_LONG[d.weekday()],
                      "is_today": d == today, "is_past": d < today, "tasks": tasks,
                      "done_count": sum(1 for t in on_day if t.is_done)})
@@ -191,11 +197,15 @@ def detail(request, pk: int):
     for e in events:
         local = timezone.localtime(e.created_at)
         e.when = dates.day_month(local.date()) + local.strftime(" %H:%M")
-    return render(request, "vazifalar/detail.html", {
+    back = request.GET.get("next") or "/"
+    if not back.startswith("/") or back.startswith("//"):
+        back = "/"
+    partial = request.GET.get("partial") == "1"
+    return render(request, "vazifalar/_task_panel.html" if partial else "vazifalar/detail.html", {
         "t": task, "events": events, "due_dm": dates.day_month(task.due_date),
-        "here": f"/vazifa/{task.pk}/", "back": request.GET.get("next") or "/",
+        "here": back if partial else f"/vazifa/{task.pk}/?next={back}", "back": back, "partial": partial,
         "can_manage": sv.can_manage(me, task), "can_touch": sv.can_touch(me, task),
-        "people": sv.assignable_people(), "companies": cfg.COMPANIES,
+        "people": sv.assignable_people(), "companies": cfg.COMPANIES, "today_iso": dates.today().isoformat(),
     })
 
 
@@ -252,7 +262,7 @@ def toggle(request, pk):
 @_task_action
 def cancel(request, pk):
     sv.cancel(request.account, pk, request.POST.get("reason"))
-    messages.success(request, "Bekor qilindi.")
+    messages.success(request, "O'chirildi.")
 
 
 @_task_action
@@ -272,6 +282,35 @@ def kimga(request, pk):
 def kompaniya(request, pk):
     sv.set_company(request.account, pk, request.POST.get("company") or "")
     messages.success(request, "Saqlandi.")
+
+
+@_task_action
+def save(request, pk):
+    """The edit window's Saqlash: title, person, date, company in one go."""
+    who = UserAccount.objects.filter(username=request.POST.get("kim") or "", is_active=True).first()
+    company = request.POST.get("company")
+    sv.update_task(request.account, pk, title=request.POST.get("title"), assignee=who,
+                   due_date=_parse_date(request.POST.get("due")),
+                   company=(company if company is not None else None))
+    messages.success(request, "Saqlandi.")
+
+
+@login_required
+@require_POST
+def move(request, pk: int):
+    """Drag-and-drop on the board: a new date, answered in JSON (the page moves the card itself)."""
+    new_due = _parse_date(request.POST.get("due"))
+    try:
+        if new_due is None:
+            raise sv.NotAllowed("Sana noto'g'ri.")
+        if new_due < dates.today():
+            raise sv.NotAllowed("O'tgan kunga qo'yib bo'lmaydi.")
+        t = sv.change_due(request.account, pk, new_due)
+    except Vazifa.DoesNotExist:
+        raise Http404
+    except sv.NotAllowed as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+    return JsonResponse({"ok": True, "due": t.due_date.isoformat()})
 
 
 @_task_action

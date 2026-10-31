@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{% static 'app.css' %}">
+{% if me %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
 </head>
 <body>
 {% if me %}
@@ -52,6 +53,9 @@
 {% endif %}
 {% if messages %}<div class="msgs" id="msgs">{% for m in messages %}<div class="msg {{ m.tags }}" role="status">{{ m }}</div>{% endfor %}</div>
 <script>setTimeout(function(){var m=document.getElementById('msgs');if(m)m.remove();},3500)</script>{% endif %}
+{% if me %}<dialog id="task" class="taskdlg" aria-label="Vazifa"><div id="task-body"></div></dialog>
+<div id="toast" class="msgs" hidden><div class="msg error" id="toast-msg"></div></div>
+<script src="{% static 'board.js' %}"></script>{% endif %}
 <script src="{% static 'translit.js' %}"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
-<article class="card{% if late %} is-late{% endif %}{% if t.is_done %} done{% endif %}">
+<article class="card{% if late %} is-late{% endif %}{% if t.is_done %} done{% endif %}{% if t.movable %} movable{% endif %}" data-id="{{ t.pk }}"{% if t.movable %} draggable="true"{% endif %}>
   <form method="post" action="/vazifa/{{ t.pk }}/belgi/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
     <button class="tick{% if t.is_done %} on{% endif %}" type="submit" aria-label="{% if t.is_done %}Qayta ochish{% else %}Bajarildi deb belgilash{% endif %}"><svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M2.5 6.2l2.3 2.3L9.5 3.8"/></svg></button>
   </form>
   <div class="body">
-    <a class="t" href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>
+    <a class="t js-open" href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}" data-id="{{ t.pk }}">{{ t.title }}</a>
     <div class="foot">
       {% if late %}<span class="lateby">{{ t.dm }} · {{ t.late_text }}</span>{% elif show_date %}<span>{{ t.dm }}</span>{% endif %}
       {% if t.izoh_count %}<span class="chip" title="Izohlar"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h10v7H7l-3 3v-3H3z"/></svg>{{ t.izoh_count }}</span>{% endif %}

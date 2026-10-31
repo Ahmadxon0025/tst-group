@@ -55,6 +55,9 @@ def on_event(event) -> None:  # CORE: reusable — the one entry point from serv
             title=task.title, old=dates.day_month(event.old_due), new=dates.day_month(event.new_due)))
     elif kind == "bekor" and task.assignee_id != actor.pk:
         enqueue(task.assignee, f"{key}:a", T.CANCELLED.format(title=task.title, reason=event.note))
+    elif kind == "nom" and task.assignee_id != actor.pk:
+        enqueue(task.assignee, f"{key}:a", T.RENAMED.format(old=event.note, new=task.title),
+                task_buttons(task.assignee, task.pk))
     elif kind == "izoh":
         for other in {task.assignee, task.created_by}:
             if other.pk != actor.pk:

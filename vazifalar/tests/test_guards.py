@@ -82,13 +82,12 @@ def test_company_must_be_known(boss, ali):
     assert t.company == "tst" and t.events.last().kind == "kompaniya"
 
 
-def test_cancel_needs_a_reason_and_keeps_the_task(boss, ali):
+def test_delete_keeps_the_task_in_history(boss, ali):
     t = sv.create_task(boss, "x", ali, D)
-    with pytest.raises(sv.NotAllowed):
-        sv.cancel(boss, t.pk, "  ")
-    sv.cancel(boss, t.pk, "Ikki marta kiritilgan")
+    sv.cancel(boss, t.pk, "  ")                       # one-click delete: no reason typed
     t.refresh_from_db()
     assert t.status == Vazifa.BEKOR and Vazifa.objects.filter(pk=t.pk).exists()
+    assert t.events.last().note == "O'chirildi"
     with pytest.raises(sv.NotAllowed):
         sv.mark_done(ali, t.pk)
 
@@ -158,7 +157,7 @@ def test_manager_page_shows_own_and_given_only(client, boss, ali, vali):
 
 def test_worker_cannot_create_from_page(client, worker, ali):
     login(client, worker)
-    assert "<dialog" not in client.get("/").content.decode()
+    assert 'id="add"' not in client.get("/").content.decode()
     client.post("/vazifa/yangi/", {"title": "z", "kim": ali.username, "due": "2026-11-02", "next": "/"})
     assert not Vazifa.objects.filter(title="z").exists()
 
@@ -201,3 +200,48 @@ def test_password_change(client, ali):
     client.post("/parol/", {"old": "pw-ali", "new": "yangiparol1", "again": "yangiparol1"})
     ali.refresh_from_db()
     assert ali.check_password("yangiparol1")
+
+
+def test_rename_and_combined_edit(boss, ali, vali):
+    t = sv.create_task(boss, "Eski nom", ali, D)
+    sv.update_task(boss, t.pk, title="Yangi nom", assignee=vali, due_date=D + timedelta(days=2), company="git")
+    t.refresh_from_db()
+    assert (t.title, t.assignee, t.due_date, t.company) == ("Yangi nom", vali, D + timedelta(days=2), "git")
+    kinds = list(t.events.values_list("kind", flat=True))
+    assert kinds == ["yaratildi", "nom", "kimga", "muddat", "kompaniya"]
+    assert t.events.get(kind="nom").note == "Eski nom"
+    sv.update_task(boss, t.pk, title="Yangi nom", assignee=vali, due_date=t.due_date, company="git")
+    assert t.events.count() == 5                      # nothing changed → nothing written
+    with pytest.raises(sv.NotAllowed):
+        sv.update_task(vali, t.pk, title="assignee may not rename")
+
+
+def test_drag_to_another_day(client, boss, ali):
+    today = timezone.localdate()
+    t = sv.create_task(boss, "x", ali, today)
+    login(client, ali)                                # the assignee may not move it
+    r = client.post(f"/vazifa/{t.pk}/kunga/", {"due": (today + timedelta(days=1)).isoformat()})
+    assert r.status_code == 400 and r.json()["ok"] is False
+    client.post("/chiqish/")
+    login(client, boss)
+    r = client.post(f"/vazifa/{t.pk}/kunga/", {"due": (today - timedelta(days=1)).isoformat()})
+    assert r.status_code == 400                       # not into the past
+    r = client.post(f"/vazifa/{t.pk}/kunga/", {"due": (today + timedelta(days=2)).isoformat()})
+    assert r.json() == {"ok": True, "due": (today + timedelta(days=2)).isoformat()}
+    t.refresh_from_db()
+    assert t.due_date == today + timedelta(days=2) and t.events.last().kind == "muddat"
+
+
+def test_edit_window_and_save(client, boss, ali):
+    t = sv.create_task(boss, "Oyna", ali, timezone.localdate())
+    login(client, boss)
+    html = client.get(f"/vazifa/{t.pk}/?partial=1&next=/").content.decode()
+    assert 'class="tp"' in html and "<html" not in html and "saqlash" in html
+    r = client.post(f"/vazifa/{t.pk}/saqlash/", {"title": "Oyna 2", "kim": ali.username,
+                                                 "due": t.due_date.isoformat(), "company": "", "next": "/"})
+    assert r["Location"] == "/"
+    t.refresh_from_db()
+    assert t.title == "Oyna 2"
+    client.post(f"/vazifa/{t.pk}/bekor/", {"next": "/"})
+    t.refresh_from_db()
+    assert t.status == "bekor"
