@@ -28,5 +28,5 @@ sudo -u tst .venv/bin/python manage.py migrate --noinput -v0
 sudo -u tst .venv/bin/python manage.py collectstatic --noinput -v0
 systemctl restart tst-web tst-bot
 sleep 2
-systemctl is-active --quiet tst-web && systemctl is-active --quiet tst-bot && echo "OK — running $(git rev-parse --short HEAD)" \
+systemctl is-active --quiet tst-web && systemctl is-active --quiet tst-bot && echo "OK — running $(sudo -u tst git -C "$ROOT" rev-parse --short HEAD)" \
   || { echo "A service did not start — check: journalctl -u tst-web -u tst-bot -n 50"; exit 1; }
