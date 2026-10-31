@@ -74,6 +74,11 @@ USE_I18N = False
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+# File names carry a content hash (app.3f2a….css), so every update reaches browsers without Ctrl+F5.
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.ManifestStaticFilesStorage"},
+}
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30   # stay signed in on the phone for 30 days
 SESSION_COOKIE_HTTPONLY = True

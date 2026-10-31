@@ -227,7 +227,7 @@ def create(request):
     me = request.account
     raw = request.POST.get("title") or ""
     parsed = parse_text(raw)
-    who = request.POST.get("kim") or parsed.who or ""
+    who = request.POST.get("kim") or parsed.who or me.username      # no @name → the task is yours
     assignee = UserAccount.objects.filter(username=who, is_active=True).first()
     due = _parse_date(request.POST.get("due")) or parsed.due or dates.today()
     try:

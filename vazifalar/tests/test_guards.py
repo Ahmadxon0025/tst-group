@@ -252,3 +252,14 @@ def test_app_manifest_and_service_worker(client):
     assert m.status_code == 200 and m.json()["display"] == "standalone"
     sw = client.get("/sw.js")
     assert sw.status_code == 200 and sw["Service-Worker-Allowed"] == "/"
+
+
+def test_one_line_add_defaults_to_me_and_today(client, boss, ali):
+    login(client, boss)
+    assert 'id="qbar"' in client.get("/").content.decode()
+    client.post("/vazifa/yangi/", {"title": "Bankka qo'ng'iroq", "next": "/"})
+    client.post("/vazifa/yangi/", {"title": "Hisobot ertaga @ali #tst !", "next": "/"})
+    a = Vazifa.objects.get(title="Bankka qo'ng'iroq")
+    b = Vazifa.objects.get(title="Hisobot")
+    assert a.assignee == boss and a.due_date == timezone.localdate()
+    assert b.assignee == ali and b.company == "tst" and b.important

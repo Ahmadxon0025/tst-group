@@ -8,6 +8,15 @@
     <a href="{{ next_link }}" aria-label="Keyingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
   </nav>
 </div>
+{% if me.can_create %}
+<form class="qbar" method="post" action="/vazifa/yangi/" autocomplete="off">{% csrf_token %}
+  <input type="hidden" name="next" value="{{ here }}">
+  <span class="qbar-plus" aria-hidden="true">+</span>
+  <input class="qbar-in" id="qbar" name="title" maxlength="300" required placeholder="Vazifa yozing va Enter bosing — masalan: Hisobot ertaga @abdurazzoq #tst !" aria-label="Tez vazifa qo'shish">
+  <button class="btn pri qbar-go" type="submit">Qo'shish</button>
+  <div class="qa-chips qbar-chips" id="qbar-chips" aria-live="polite"></div>
+</form>
+{% endif %}
 <nav class="mpeople" aria-label="Kim bo'yicha">
   {% for p in person_links %}<a class="{% if p.username == 'all' %}all{% endif %}{% if p.on %} on{% endif %}" href="{{ p.href }}">{% if p.initial %}<span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{% endif %}{{ p.label }}</a>{% endfor %}
 </nav>

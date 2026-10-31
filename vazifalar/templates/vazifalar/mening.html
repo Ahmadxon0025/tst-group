@@ -3,6 +3,16 @@
 {% block body %}
 <div class="page">
   <div class="head"><div><h1>Mening vazifalarim</h1></div></div>
+{% if me.can_create %}
+<form class="qbar inpage" method="post" action="/vazifa/yangi/" autocomplete="off">{% csrf_token %}
+  <input type="hidden" name="next" value="{{ here }}">
+  <span class="qbar-plus" aria-hidden="true">+</span>
+  <input class="qbar-in" id="qbar" name="title" maxlength="300" required placeholder="Vazifa yozing va Enter bosing — masalan: Hisobot ertaga @abdurazzoq #tst !" aria-label="Tez vazifa qo'shish">
+  <button class="btn pri qbar-go" type="submit">Qo'shish</button>
+  <div class="qa-chips qbar-chips" id="qbar-chips" aria-live="polite"></div>
+</form>
+{% endif %}
+
   {% for title, cls, items in groups %}
   {% if items or cls != 'late' %}
   <section class="grp {{ cls }}-g">

@@ -6,3 +6,7 @@ from tst.settings import *  # noqa
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]   # tests only: fast
 TST_BOT_TOKEN = ""          # tests never talk to the real Telegram bot, even on the server
 TST_BOT_USERNAME = ""
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}

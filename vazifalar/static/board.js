@@ -18,6 +18,28 @@
     }
   }
 
+  // ---- one-line quick add bar: live preview of what was understood -----------------------
+  var qb = document.getElementById("qbar"), qc = document.getElementById("qbar-chips");
+  if (qb && qc) {
+    var qt;
+    function chip(t, cls) { return '<span class="qa-chip ' + (cls || '') + '">' + t.replace(/</g, "&lt;") + "</span>"; }
+    qb.addEventListener("input", function () {
+      clearTimeout(qt);
+      if (!qb.value.trim()) { qc.innerHTML = ""; return; }
+      qt = setTimeout(function () {
+        fetch("/vazifa/tahlil/?q=" + encodeURIComponent(qb.value), {credentials: "same-origin"})
+          .then(function (r) { return r.json(); }).then(function (j) {
+            var h = chip("📅 " + (j.due_label || "Bugun"));
+            h += chip("👤 " + (j.who_name || "Men"));
+            if (j.company) h += chip("#" + j.company_label, "keep");
+            if (j.important) h += chip("❗ Muhim", "imp");
+            if (j.repeat) h += chip("🔁 " + j.repeat_label);
+            qc.innerHTML = h; cyr(qc);
+          }).catch(function () {});
+      }, 200);
+    });
+  }
+
   // ---- open the edit window -------------------------------------------------------------
   document.addEventListener("click", function (e) {
     var a = e.target.closest("a.js-open");

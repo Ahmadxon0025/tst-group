@@ -258,7 +258,7 @@ details.manage .row+.row{margin-top:8px}
 /* ---- card actions (bottom right) ---- */
 .card{position:relative}
 .card .body{padding-right:0}
-.cact{position:absolute;right:6px;bottom:6px;display:flex;gap:2px;opacity:0;transition:opacity .12s;background:var(--card);border-radius:6px}
+.cact{position:absolute;right:6px;bottom:6px;display:flex;gap:2px;opacity:.6;transition:opacity .12s;background:var(--card);border-radius:6px}
 .card:hover .cact,.card:focus-within .cact{opacity:1}
 .cact form{margin:0;display:flex}
 .ca{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:6px;color:var(--faint);cursor:pointer;padding:0}
@@ -268,3 +268,14 @@ details.manage .row+.row{margin-top:8px}
 .card .foot{padding-right:84px;min-height:16px}
 @media (hover:none){.cact{opacity:1}}
 @media (prefers-reduced-motion:reduce){.cact{transition:none}}
+/* ---- one-line quick add bar ---- */
+.qbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 40px 0;padding:6px 6px 6px 12px;border:1px solid var(--card-line);border-radius:10px;background:var(--card)}
+.qbar:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.qbar.inpage{margin:16px 0 0}
+.qbar-plus{color:var(--accent);font-size:20px;line-height:1;font-weight:600}
+.qbar-in{flex:1 1 300px;min-width:0;height:36px;border:none;background:transparent;font-size:15px;outline:none}
+.qbar-in::placeholder{color:var(--faint)}
+.qbar-go{height:34px}
+.qbar-chips{flex-basis:100%;padding-left:22px}
+.qbar-chips:empty{display:none}
+@media (max-width:760px){.qbar{margin:12px 16px 0}.qbar.inpage{margin:12px 0 0}.qbar-go{display:none}}
