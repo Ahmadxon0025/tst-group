@@ -314,3 +314,22 @@ details.manage .row+.row{margin-top:8px}
   main.board .card.movable{cursor:grab}
   .col.inbox{position:sticky;left:-40px;z-index:3;background:var(--bg);box-shadow:10px 0 14px -12px rgba(0,0,0,.45);border-right:1px solid var(--line);margin:-8px 0 0 -40px;padding:8px 12px 4px 40px;border-radius:0;align-self:stretch}
 }
+/* ---- hide / show the left menu ---- */
+.side{transition:margin-left .18s ease}
+.side-x{position:absolute;top:14px;right:10px;width:30px;height:30px;border:none;background:transparent;color:var(--muted);border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.side-x:hover{background:var(--side-hi);color:var(--ink)}
+.side .user{padding-right:40px}
+.side-open{display:none;position:fixed;top:12px;left:12px;z-index:20;width:34px;height:34px;border:1px solid var(--card-line);background:var(--card);color:var(--muted);border-radius:8px;cursor:pointer;align-items:center;justify-content:center}
+.side-open:hover{color:var(--ink);border-color:var(--ink)}
+.side{position:sticky}
+.side-hidden .side{margin-left:calc(-1 * var(--side-w))}
+.side-hidden .side-open{display:flex}
+.side-hidden .head{padding-left:64px}
+.side-hidden .qbar{margin-left:64px}
+.side-hidden .board{padding-left:64px}
+@media (min-width:761px){.side-hidden .col.inbox{left:-64px;margin-left:-64px;padding-left:64px}}
+@media (max-width:760px){.side-open,.side-x{display:none!important}.side-hidden .head,.side-hidden .board{padding-left:16px}.side-hidden .qbar{margin-left:16px}}
+@media (prefers-reduced-motion:reduce){.side{transition:none}}
+.side-hidden .page{padding-left:64px}
+@media (max-width:760px){.side-hidden .page{padding-left:16px}}
+.side-hidden .page .head{padding-left:0}.side-hidden .page .qbar{margin-left:0}
