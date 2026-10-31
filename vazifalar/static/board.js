@@ -54,8 +54,20 @@
     dragged = null;
     document.querySelectorAll(".col.drop").forEach(function (c) { c.classList.remove("drop"); });
   });
-  document.addEventListener("dragover", function (e) {
+  function colAt(e) {
+    // the column under the pointer, or — anywhere on the board, even below the cards — the one at its x position
     var col = e.target.closest && e.target.closest(".col[data-date]");
+    if (col) return col;
+    if (!(e.target.closest && e.target.closest(".board"))) return null;
+    var cols = document.querySelectorAll(".col[data-date]");
+    for (var i = 0; i < cols.length; i++) {
+      var r = cols[i].getBoundingClientRect();
+      if (e.clientX >= r.left - 11 && e.clientX <= r.right + 11) return cols[i];
+    }
+    return null;
+  }
+  document.addEventListener("dragover", function (e) {
+    var col = colAt(e);
     if (!dragged || !col) return;
     e.preventDefault(); e.dataTransfer.dropEffect = "move";
     document.querySelectorAll(".col.drop").forEach(function (c) { if (c !== col) c.classList.remove("drop"); });
@@ -68,7 +80,7 @@
     });
   }
   document.addEventListener("drop", function (e) {
-    var col = e.target.closest && e.target.closest(".col[data-date]");
+    var col = colAt(e);
     if (!dragged || !col) return;
     e.preventDefault();
     var card = dragged, from = card.parentNode, next = card.nextSibling;

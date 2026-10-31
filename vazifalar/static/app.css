@@ -240,3 +240,4 @@ details.manage .row+.row{margin-top:8px}
 @media (max-width:760px){.tp-grid{grid-template-columns:1fr}}
 .msgs[hidden]{display:none!important}
 .tp-date input{flex:1 1 150px}.tp-date button{flex:0 0 auto}
+@media (min-width:761px){.board{min-height:calc(100vh - 140px)}.board>.col{align-self:stretch;min-height:200px}}
