@@ -53,16 +53,19 @@ def test_only_giver_or_bosh_manages(boss, ali, vali):
     assert t.assignee == boss and t.due_date == D + timedelta(days=1)
 
 
-def test_visibility_own_and_given(boss, ali, vali):
+def test_everyone_sees_the_board_except_maxfiy(boss, ali, vali):
     a = sv.create_task(boss, "bossdan alige", ali, D)
     b = sv.create_task(ali, "alidan valiga", vali, D)
-    c = sv.create_task(boss, "bossdan valiga", vali, D)
+    c = sv.create_task(boss, "bossdan valiga", vali, D)                     # open → ali sees it
+    m = sv.create_task(boss, "maxfiy valiga", vali, D, private=True)       # private → ali does not
     seen_by_ali = set(sv.visible_tasks(ali).values_list("pk", flat=True))
-    assert seen_by_ali == {a.pk, b.pk}
-    assert set(sv.visible_tasks(boss).values_list("pk", flat=True)) == {a.pk, b.pk, c.pk}
+    assert seen_by_ali == {a.pk, b.pk, c.pk}
+    assert set(sv.visible_tasks(vali).values_list("pk", flat=True)) == {a.pk, b.pk, c.pk, m.pk}   # the doer
+    assert set(sv.visible_tasks(boss).values_list("pk", flat=True)) == {a.pk, b.pk, c.pk, m.pk}   # the bosh
+    p = sv.create_task(ali, "ali bergan maxfiy", vali, D, private=True)
+    assert sv.visible_tasks(boss).filter(pk=p.pk).exists()                  # bosh sees every Maxfiy
     with pytest.raises(sv.NotAllowed):
-        sv.mark_done(ali, c.pk)
-
+        sv.mark_done(ali, c.pk)                                             # seeing is not touching
 
 def test_reassign_is_recorded(boss, ali, vali):
     t = sv.create_task(boss, "x", ali, D)
@@ -144,16 +147,18 @@ def test_week_page_and_toggle(client, boss, ali):
     assert t.is_done
 
 
-def test_manager_page_shows_own_and_given_only(client, boss, ali, vali):
+def test_manager_page_shows_board_but_not_maxfiy(client, boss, ali, vali):
     sv.create_task(boss, "Aliniki", ali, timezone.localdate())
     sv.create_task(boss, "Valiniki", vali, timezone.localdate())
-    sv.create_task(ali, "Ali valiga berdi", vali, timezone.localdate())
+    sv.create_task(boss, "Maxfiy ish", vali, timezone.localdate(), private=True)
     login(client, ali)
     page = client.get("/").content.decode()
-    assert "Aliniki" in page and "Ali valiga berdi" in page and "Valiniki" not in page
+    assert "Aliniki" in page and "Valiniki" in page and "Maxfiy ish" not in page
+    hidden = Vazifa.objects.get(title="Maxfiy ish")
+    assert client.get(f"/vazifa/{hidden.pk}/").status_code == 404
     other = Vazifa.objects.get(title="Valiniki")
-    assert client.get(f"/vazifa/{other.pk}/").status_code == 404
-
+    html = client.get(f"/vazifa/{other.pk}/?partial=1").content.decode()
+    assert "saqlash" not in html and "/izoh/" not in html                   # read-only for an onlooker
 
 def test_worker_cannot_create_from_page(client, worker, ali):
     login(client, worker)
@@ -307,3 +312,21 @@ def test_edit_window_can_clear_the_date(client, boss, ali):
 def test_repeat_without_date_starts_today(boss):
     t = sv.create_task(boss, "Kassa", boss, None, repeat="daily")
     assert t.due_date == timezone.localdate()
+
+
+
+def test_maxfiy_by_quick_add_and_toggle(client, boss, ali):
+    login(client, boss)
+    client.post("/vazifa/yangi/", {"title": "Bank strategiyasi maxfiy @ali", "next": "/"})
+    t = Vazifa.objects.get()
+    assert t.private and t.title == "Bank strategiyasi"
+    sv.update_task(boss, t.pk, private=False)
+    t.refresh_from_db()
+    assert not t.private and t.events.last().kind == "maxfiy"
+
+
+def test_onlooker_card_has_no_active_tick(client, boss, ali, vali):
+    t = sv.create_task(boss, "Valiniki", vali, timezone.localdate())
+    login(client, ali)
+    page = client.get("/").content.decode()
+    assert f'action="/vazifa/{t.pk}/belgi/"' not in page and 'tick ro' in page

@@ -32,6 +32,7 @@ DAY_WORDS = {"kuni", "кун", "куни", "kun"}
 WEEK_WORDS = {"hafta", "ҳафта", "хафта"}
 MONTH_WORDS = {"oy", "ой", "oyning", "ойнинг"}
 IMPORTANT = {"!", "!!", "muhim", "муҳим", "мухим"}
+PRIVATE = {"maxfiy", "махфий", "🔒"}
 AFTER = re.compile(r"^(\d{1,3})$")
 DAYS_LATER = {"kundan", "кундан"}
 LATER = {"keyin", "кейин", "so'ng", "сўнг"}
@@ -44,6 +45,7 @@ class Parsed:  # CORE: reusable
     who: str | None = None          # username
     company: str | None = None      # company key
     important: bool = False
+    private: bool = False
     repeat: str = ""                # "" | "daily" | "weekly" | "weekly:<0-6>" | "monthly" | "monthly:<1-31>"
     found: list = field(default_factory=list)   # what was understood, for the preview
 
@@ -123,6 +125,9 @@ def parse(text: str, today: date, people: dict, companies: dict) -> Parsed:  # C
         elif n in IMPORTANT:
             p.important = True
             eat(1, "important")
+        elif n in PRIVATE:
+            p.private = True
+            eat(1, "private")
         elif n in EVERY and nxt:
             if nxt in DAY_WORDS:
                 p.repeat = "daily"

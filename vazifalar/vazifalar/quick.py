@@ -48,6 +48,6 @@ def preview(text: str) -> dict:  # CORE: reusable — what the add window shows 
     return {
         "title": p.title, "due": p.due.isoformat() if p.due else "", "due_label": dates.day_month(p.due) if p.due else "",
         "who": p.who or "", "who_name": names.get(p.who, ""), "company": p.company or "",
-        "company_label": dict(cfg.COMPANIES).get(p.company, ""), "important": p.important,
+        "company_label": dict(cfg.COMPANIES).get(p.company, ""), "important": p.important, "private": p.private,
         "repeat": p.repeat, "repeat_label": rep,
     }

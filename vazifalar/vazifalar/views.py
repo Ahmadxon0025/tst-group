@@ -81,7 +81,7 @@ def hafta(request):
     today = dates.today()
     w = max(-WEEK_OFFSET_LIMIT, min(WEEK_OFFSET_LIMIT, _int(request.GET.get("w"))))
     start = today + timedelta(days=7 * w)
-    end = start + timedelta(days=6)
+    end = start + timedelta(days=cfg.BOARD_DAYS - 1)
     base, who, company = _filters(request, me)
 
     overdue = list(_with_counts(base.filter(status=Vazifa.YANGI, due_date__lt=today)).order_by("-important", "due_date"))
@@ -103,7 +103,7 @@ def hafta(request):
         by_day.setdefault(t.due_date, []).append(t)
 
     days = []
-    for i in range(7):
+    for i in range(cfg.BOARD_DAYS):
         d = start + timedelta(days=i)
         on_day = by_day.get(d, [])
         tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: (not t.important, t.created_at)))
@@ -124,7 +124,7 @@ def hafta(request):
         title = f"{title} · {dict(cfg.COMPANIES)[company]}" if who else dict(cfg.COMPANIES)[company]
     return render(request, "vazifalar/hafta.html", {
         "days": days, "overdue": overdue, "inbox": inbox, "month_label": dates.month_label(start, end), "title": title,
-        "prev_link": link(w=w - 1), "next_link": link(w=w + 1), "today_link": link(w=0),
+        "prev_link": link(w=w - 1), "next_link": link(w=w + 3), "today_link": link(w=0),
         "is_this_week": w == 0, "who": who, "here": here, "kim_value": q["kim"], "company": company,
         "company_links": [{"key": "", "label": "Hammasi", "href": link(k=""), "on": not company}] + [
             {"key": k, "label": lbl, "href": link(k=k), "on": company == k} for k, lbl in cfg.COMPANIES],
@@ -243,7 +243,8 @@ def create(request):
         sv.create_task(me, parsed.title or raw, assignee, due,
                        company=request.POST.get("company") or parsed.company or "",
                        important=bool(request.POST.get("important")) or parsed.important,
-                       repeat=request.POST.get("repeat") or parsed.repeat)
+                       repeat=request.POST.get("repeat") or parsed.repeat,
+                       private=bool(request.POST.get("private")) or parsed.private)
         messages.success(request, "Qo'shildi.")
     except sv.NotAllowed as e:
         messages.error(request, str(e))
@@ -325,6 +326,7 @@ def save(request, pk):
                              else (_parse_date(request.POST.get("due")) or sv.UNSET)),
                    company=(company if company is not None else None),
                    important=bool(request.POST.get("important")),
+                   private=bool(request.POST.get("private")),
                    repeat=request.POST.get("repeat", None))
     messages.success(request, "Saqlandi.")
 

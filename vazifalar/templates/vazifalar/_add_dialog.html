@@ -3,7 +3,7 @@
     <input type="hidden" name="next" value="{{ here|default:request.get_full_path }}">
     <textarea class="ttl" id="add-title" name="title" maxlength="300" required rows="2" placeholder="Masalan: NBU ma'lumotnoma ertaga @abdurazzoq #guruh !" aria-label="Nima qilish kerak"></textarea>
     <div class="qa-chips" id="qa-chips" aria-live="polite"></div>
-    <p class="qa-hint">Yozishda: <b>ertaga</b>, <b>juma</b>, <b>5-noyabr</b>, <b>@ism</b>, <b>#kompaniya</b>, <b>!</b> (muhim), <b>har dushanba</b> (takror)</p>
+    <p class="qa-hint">Yozishda: <b>ertaga</b>, <b>juma</b>, <b>5-noyabr</b>, <b>@ism</b>, <b>#kompaniya</b>, <b>!</b> (muhim), <b>maxfiy</b>, <b>har dushanba</b> (takror)</p>
     <div><span class="lbl">Kim</span>
       <div class="pick">{% for p in side_people %}<label style="--p:{{ p.color }}"><input type="radio" name="kim" value="{{ p.username }}" required{% if default_assignee == p.username %} checked{% endif %}><span><span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{{ p.name }}</span></label>{% endfor %}</div></div>
     <div><span class="lbl">Qachongacha</span>
@@ -23,6 +23,7 @@
     </div>
     <div class="qa-row">
       <label class="chk"><input type="checkbox" name="important" id="add-imp"> <span>❗ Muhim</span></label>
+      <label class="chk" title="Faqat bergan, bajaruvchi va bosh direktor ko'radi"><input type="checkbox" name="private" id="add-prv"> <span>🔒 Maxfiy</span></label>
       <label class="qa-rep"><span class="lbl" style="margin:0">Takrorlash</span>
         <select name="repeat" id="add-rep">
           <option value="">Yo'q</option><option value="daily">Har kuni</option><option value="weekly">Har hafta</option><option value="monthly">Har oy</option>
@@ -55,6 +56,7 @@
       if(j.company){var c=d.querySelector('input[name=company][value="'+j.company+'"]');if(c)c.checked=true;h+=chip('#'+j.company_label,'keep');}
       document.getElementById('add-imp').checked=!!j.important||document.getElementById('add-imp').dataset.manual==='1'&&document.getElementById('add-imp').checked;
       if(j.important)h+=chip('❗ Muhim','imp');
+      if(j.private){document.getElementById('add-prv').checked=true;h+=chip('🔒 Maxfiy');}
       var rep=document.getElementById('add-rep');
       if(j.repeat){if(!rep.querySelector('option[value="'+j.repeat+'"]')){var o=document.createElement('option');o.value=j.repeat;o.textContent=j.repeat_label;rep.appendChild(o);}rep.value=j.repeat;h+=chip('🔁 '+j.repeat_label);}
       chips.innerHTML=h;

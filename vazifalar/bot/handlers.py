@@ -160,13 +160,15 @@ def quick_ask(chat_id, user, text):
     s = _session(user)
     s.state = "quick"
     s.data = {"title": p.title[:cfg.TASK_TITLE_MAX], "who": who.username, "due": due.isoformat() if due else "",
-              "co": p.company or "", "imp": p.important, "rep": p.repeat}
+              "co": p.company or "", "imp": p.important, "rep": p.repeat, "prv": p.private}
     s.save()
     extra = ""
     if p.company:
         extra += f" · #{dict(cfg.COMPANIES)[p.company]}"
     if p.important:
         extra += " · ❗"
+    if p.private:
+        extra += " · 🔒 Maxfiy"
     if p.repeat:
         extra += " · 🔁 " + Vazifa(repeat=p.repeat).repeat_label
     _reply(chat_id, user, T.QUICK_ASK.format(title=p.title, who=who.name, due=dates.day_month(due), extra=extra),
@@ -278,7 +280,8 @@ def handle_callback(cq: dict) -> None:
         who = UserAccount.objects.filter(username=d.get("who"), is_active=True).first()
         try:
             t = sv.create_task(user, d.get("title", ""), who, _date.fromisoformat(d["due"]) if d.get("due") else None, source=TG,
-                               company=d.get("co", ""), important=bool(d.get("imp")), repeat=d.get("rep", ""))
+                               company=d.get("co", ""), important=bool(d.get("imp")), repeat=d.get("rep", ""),
+                               private=bool(d.get("prv")))
         except (sv.NotAllowed, KeyError, ValueError) as e:
             return _reply(chat_id, user, str(e))
         return _reply(chat_id, user, T.NEW_OK.format(title=t.title, who=t.assignee.name, due=dates.day_month(t.due_date)))

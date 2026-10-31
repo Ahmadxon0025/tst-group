@@ -6,7 +6,8 @@ Rules:
 - A person whose role can_create makes tasks for anyone.
 - The task's creator or a sees_all person cancels, re-dates or hands it to someone else ("manage").
 - The assignee, the creator or a sees_all person marks it done, reopens it, or comments ("touch").
-- A person sees tasks given to him and tasks he gave; a sees_all person sees everything.
+- Everyone sees every task except "Maxfiy" ones; a Maxfiy task is seen only by its giver, its doer and a
+  sees_all person (the bosh sees everything).
 - "Delete" is a cancel: the task leaves the board but stays in history (a reason is optional).
 - Each write = state change + VazifaEvent + AuditLog, in one transaction.
 """
@@ -29,7 +30,9 @@ class NotAllowed(Exception):  # CORE: reusable — shown to the person as a plai
 def visible_tasks(account: UserAccount):  # CORE: reusable
     from django.db.models import Q
     qs = Vazifa.objects.select_related("assignee", "created_by")
-    return qs if account.sees_all else qs.filter(Q(assignee=account) | Q(created_by=account))
+    if account.sees_all:
+        return qs
+    return qs.filter(Q(private=False) | Q(assignee=account) | Q(created_by=account))
 
 
 def can_touch(account: UserAccount, task: Vazifa) -> bool:  # CORE: reusable
@@ -79,7 +82,7 @@ def _repeat(rule: str) -> str:
 
 def create_task(actor: UserAccount, title: str, assignee: UserAccount, due_date: date,
                 source: str = VazifaEvent.WEB, company: str = "", important: bool = False,
-                repeat: str = "") -> Vazifa:  # CORE: reusable
+                repeat: str = "", private: bool = False) -> Vazifa:  # CORE: reusable
     if not actor.can_create:
         raise NotAllowed("Sizda vazifa qo'shish huquqi yo'q.")
     company = _company(company)
@@ -96,11 +99,13 @@ def create_task(actor: UserAccount, title: str, assignee: UserAccount, due_date:
         due_date = dates.today()                     # a repeating task needs a first date
     with transaction.atomic():
         task = Vazifa.objects.create(title=title, assignee=assignee, due_date=due_date, created_by=actor,
-                                     company=company, important=bool(important), repeat=repeat)
+                                     company=company, important=bool(important), repeat=repeat,
+                                     private=bool(private))
         _event(task, VazifaEvent.YARATILDI, actor, source, new_due=due_date, new_assignee=assignee)
         audit.write(actor.username, "vazifa_yaratildi", "vazifa", task.pk,
                     new={"title": title, "assignee": assignee.username, "due": due_date.isoformat() if due_date else None,
-                         "company": company, "important": bool(important), "repeat": repeat})
+                         "company": company, "important": bool(important), "repeat": repeat,
+                         "private": bool(private)})
     return task
 
 
@@ -131,7 +136,8 @@ def _spawn_next(task: Vazifa):  # CORE: reusable — a repeating task closed →
     if due is None:
         return None
     nxt = Vazifa.objects.create(title=task.title, assignee=task.assignee, due_date=due, created_by=task.created_by,
-                                company=task.company, important=task.important, repeat=task.repeat, repeat_of=task)
+                                company=task.company, important=task.important, repeat=task.repeat, repeat_of=task,
+                                private=task.private)
     _event(nxt, VazifaEvent.YARATILDI, task.created_by, VazifaEvent.REPEAT, new_due=due, new_assignee=task.assignee)
     audit.write("system", "vazifa_takror", "vazifa", nxt.pk, new={"repeat_of": task.pk, "due": due.isoformat()})
     return nxt
@@ -237,7 +243,7 @@ UNSET = object()   # "leave as it is" (None means: no date)
 
 
 def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, due_date=UNSET, company=None,
-                important=None, repeat=None, source: str = VazifaEvent.WEB) -> Vazifa:  # CORE: reusable — the edit window's "Saqlash"
+                important=None, repeat=None, private=None, source: str = VazifaEvent.WEB) -> Vazifa:  # CORE: reusable — the edit window's "Saqlash"
     """Applies only what changed, all in one transaction; each change is its own history line."""
     with transaction.atomic():
         task = Vazifa.objects.select_for_update().get(pk=task_id)
@@ -257,6 +263,12 @@ def update_task(actor: UserAccount, task_id: int, *, title=None, assignee=None, 
             task.save(update_fields=["important"])
             _event(task, VazifaEvent.MUHIM, actor, source, note="Muhim" if task.important else "Oddiy")
             audit.write(actor.username, "vazifa_muhim", "vazifa", task.pk, new={"important": task.important})
+        if private is not None and bool(private) != task.private:
+            task.refresh_from_db()
+            task.private = bool(private)
+            task.save(update_fields=["private"])
+            _event(task, VazifaEvent.MAXFIY, actor, source, note="Maxfiy" if task.private else "Hammaga ko'rinadi")
+            audit.write(actor.username, "vazifa_maxfiy", "vazifa", task.pk, new={"private": task.private})
         if repeat is not None and _repeat(repeat) != task.repeat:
             task.refresh_from_db()
             old = task.repeat

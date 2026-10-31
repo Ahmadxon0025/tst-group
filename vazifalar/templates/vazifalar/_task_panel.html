@@ -25,6 +25,7 @@
           <option value="weekly"{% if t.repeat == 'weekly' %} selected{% endif %}>Har hafta</option>
           <option value="monthly"{% if t.repeat == 'monthly' %} selected{% endif %}>Har oy</option></select></div>
       <label class="tp-f chk"><span>Muhim</span><span><input type="checkbox" name="important"{% if t.important %} checked{% endif %}> ❗ Muhim</span></label>
+      <label class="tp-f chk" title="Faqat bergan, bajaruvchi va bosh direktor ko'radi"><span>Kim ko'radi</span><span><input type="checkbox" name="private"{% if t.private %} checked{% endif %}> 🔒 Maxfiy</span></label>
       <div class="tp-f"><span>Bergan</span><b>{{ t.created_by.name }}</b></div>
     </div>
     <div class="tp-actions">
@@ -48,6 +49,7 @@
     <div class="tp-f"><span>Bergan</span><b>{{ t.created_by.name }}</b></div>
     {% if t.repeat %}<div class="tp-f"><span>Takrorlash</span><b>🔁 {{ t.repeat_label }}</b></div>{% endif %}
     {% if t.important %}<div class="tp-f"><span>Muhim</span><b>❗ Muhim</b></div>{% endif %}
+    {% if t.private %}<div class="tp-f"><span>Kim ko'radi</span><b>🔒 Maxfiy</b></div>{% endif %}
   </div>
   {% if t.status != 'bekor' %}<p class="none">Muddat yoki nomini faqat vazifani bergan odam o'zgartiradi.</p>{% endif %}
   {% endif %}

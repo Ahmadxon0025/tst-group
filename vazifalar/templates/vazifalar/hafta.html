@@ -3,9 +3,9 @@
 <div class="head">
   <div><h1>{{ title }}</h1><div class="sub">{{ month_label }}</div></div>
   <nav class="wk" aria-label="Hafta">
-    <a href="{{ prev_link }}" aria-label="Oldingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></a>
-    <a href="{{ today_link }}"{% if is_this_week %} class="dim" aria-current="date"{% endif %}>Bugun</a>
-    <a href="{{ next_link }}" aria-label="Keyingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+    <a href="{{ prev_link }}" class="js-prev" aria-label="Oldingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></a>
+    <a href="{{ today_link }}" class="js-today{% if is_this_week %} dim{% endif %}"{% if is_this_week %} aria-current="date"{% endif %}>Bugun</a>
+    <a href="{{ next_link }}" class="js-next" aria-label="Keyingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
   </nav>
 </div>
 {% if me.can_create %}

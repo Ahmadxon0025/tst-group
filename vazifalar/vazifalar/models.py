@@ -27,6 +27,7 @@ class Vazifa(LedgerModel):  # CORE: reusable
     status = models.CharField(max_length=12, choices=STATUSES, default=YANGI)
     company = models.CharField(max_length=20, blank=True, default="")     # key from CONFIG COMPANIES, optional
     important = models.BooleanField(default=False)                         # "Muhim": shown first, red
+    private = models.BooleanField(default=False)                           # "Maxfiy": only giver, doer and bosh see it
     repeat = models.CharField(max_length=20, blank=True, default="")      # "", daily, weekly[:wd], monthly[:day]
     repeat_of = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT,
                                   related_name="next_repeats")             # the task this one repeats
@@ -79,11 +80,12 @@ class VazifaEvent(AppendOnlyModel):  # CORE: reusable — the task's history, wr
     NOM = "nom"
     KOMPANIYA = "kompaniya"
     MUHIM = "muhim"
+    MAXFIY = "maxfiy"
     TAKROR = "takror"
     IZOH = "izoh"
     KINDS = [(YARATILDI, "Yaratildi"), (BAJARILDI, "Bajarildi"), (QAYTA_OCHILDI, "Qayta ochildi"),
              (BEKOR, "O'chirildi"), (MUDDAT, "Muddat o'zgardi"), (KIMGA, "Boshqaga o'tkazildi"), (NOM, "Nomi o'zgardi"),
-             (KOMPANIYA, "Kompaniya o'zgardi"), (MUHIM, "Muhimlik o'zgardi"), (TAKROR, "Takrorlash o'zgardi"),
+             (KOMPANIYA, "Kompaniya o'zgardi"), (MUHIM, "Muhimlik o'zgardi"), (MAXFIY, "Maxfiylik o'zgardi"), (TAKROR, "Takrorlash o'zgardi"),
              (IZOH, "Izoh")]
     WEB = "web"
     TELEGRAM = "telegram"

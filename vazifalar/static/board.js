@@ -33,10 +33,52 @@
             h += chip("👤 " + (j.who_name || "Men"));
             if (j.company) h += chip("#" + j.company_label, "keep");
             if (j.important) h += chip("❗ Muhim", "imp");
+            if (j.private) h += chip("🔒 Maxfiy");
             if (j.repeat) h += chip("🔁 " + j.repeat_label);
             qc.innerHTML = h; cyr(qc);
           }).catch(function () {});
       }, 200);
+    });
+  }
+
+  // ---- press and drag the board sideways; ‹ › glide a week ------------------------------------
+  var board = document.querySelector("main.board");
+  if (board && window.matchMedia("(min-width: 761px)").matches) {
+    var down = false, startX = 0, startLeft = 0, lastX = 0, lastT = 0, vel = 0, raf = 0, moved = false;
+    function blocked(t) { return t.closest("a,button,input,textarea,select,label,.card,form,dialog"); }
+    board.addEventListener("mousedown", function (e) {
+      if (e.button !== 0 || blocked(e.target)) return;
+      down = true; moved = false; startX = lastX = e.clientX; startLeft = board.scrollLeft; lastT = performance.now();
+      vel = 0; cancelAnimationFrame(raf); board.classList.add("panning"); e.preventDefault();
+    });
+    window.addEventListener("mousemove", function (e) {
+      if (!down) return;
+      var now = performance.now(), dx = e.clientX - startX;
+      if (Math.abs(dx) > 3) moved = true;
+      board.scrollLeft = startLeft - dx;
+      vel = (e.clientX - lastX) / Math.max(1, now - lastT); lastX = e.clientX; lastT = now;
+    });
+    window.addEventListener("mouseup", function () {
+      if (!down) return;
+      down = false; board.classList.remove("panning");
+      var v = vel * 16;                                   // px per frame, eases out
+      (function glide() {
+        if (Math.abs(v) < 0.5) return;
+        board.scrollLeft -= v; v *= 0.92; raf = requestAnimationFrame(glide);
+      })();
+    });
+    function dayWidth() { var c = board.querySelector(".col[data-date]:not(.inbox)"); return c ? c.getBoundingClientRect().width + 22 : 300; }
+    function glideBy(px) { board.scrollBy({left: px, behavior: "smooth"}); }
+    var prev = document.querySelector(".js-prev"), next = document.querySelector(".js-next"), tod = document.querySelector(".js-today");
+    if (next) next.addEventListener("click", function (e) {
+      if (board.scrollLeft + board.clientWidth < board.scrollWidth - 4) { e.preventDefault(); glideBy(dayWidth() * 7); }
+    });
+    if (prev) prev.addEventListener("click", function (e) {
+      if (board.scrollLeft > 4) { e.preventDefault(); glideBy(-dayWidth() * 7); }
+    });
+    if (tod) tod.addEventListener("click", function (e) {
+      var t = board.querySelector(".col.today");
+      if (t) { e.preventDefault(); board.scrollTo({left: 0, behavior: "smooth"}); }
     });
   }
 

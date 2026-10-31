@@ -305,3 +305,12 @@ details.manage .row+.row{margin-top:8px}
 .pwrow code{font-size:16px;font-weight:600;padding:2px 8px;background:var(--hover);border-radius:6px}
 .pwnote{padding:10px 12px;border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:14px}
 @media (max-width:760px){.ppl th:nth-child(5),.ppl td:nth-child(5),.ppl th:nth-child(2),.ppl td:nth-child(2){display:none}.pmenu-body{min-width:240px}}
+.tick.ro{cursor:default;opacity:.45}.tick.ro:hover{border-color:var(--tick);background:transparent}
+/* ---- sideways board: press-and-drag, smooth, Rejasiz stays on the left ---- */
+@media (min-width:761px){
+  main.board{cursor:grab;scroll-behavior:auto;overscroll-behavior-x:contain}
+  main.board.panning{cursor:grabbing;user-select:none}
+  main.board .card,main.board a,main.board button{cursor:pointer}
+  main.board .card.movable{cursor:grab}
+  .col.inbox{position:sticky;left:-40px;z-index:3;background:var(--bg);box-shadow:10px 0 14px -12px rgba(0,0,0,.45);border-right:1px solid var(--line);margin:-8px 0 0 -40px;padding:8px 12px 4px 40px;border-radius:0;align-self:stretch}
+}

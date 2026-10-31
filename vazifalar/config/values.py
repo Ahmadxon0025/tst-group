@@ -40,6 +40,7 @@ PERSON_COLORS = {p["username"]: p["color"] for p in PEOPLE if p.get("color")}
 PERSON_PALETTE = ["#26348B", "#0F7A73", "#A86A12", "#7A3C78", "#4F6B2A", "#8A4B2D", "#3D5A80"]
 
 TASK_TITLE_MAX = 300
+BOARD_DAYS = 21          # days shown on the board at once (scroll sideways); ‹ › glide a week
 DELETE_REASON_DEFAULT = "O'chirildi"   # used when a task is deleted without a typed reason
 
 # Uzbek day and month names (screen wording).
