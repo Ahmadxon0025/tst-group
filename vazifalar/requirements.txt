@@ -1,0 +1,7 @@
+# TST Vazifalar — lean NAZORAT instance (tasks only). Same stack as nazorat-erp.
+Django>=5.2,<5.3
+dj-database-url>=2.1
+psycopg[binary]>=3.1
+gunicorn>=22.0
+pytest>=8.0
+pytest-django>=4.8

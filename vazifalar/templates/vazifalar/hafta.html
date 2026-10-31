@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="head">
+  <div><h1>{{ title }}</h1><div class="sub">{{ month_label }}</div></div>
+  <nav class="wk" aria-label="Hafta">
+    <a href="{{ prev_link }}" aria-label="Oldingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></a>
+    <a href="{{ today_link }}"{% if is_this_week %} class="dim" aria-current="date"{% endif %}>Bugun</a>
+    <a href="{{ next_link }}" aria-label="Keyingi 7 kun"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></a>
+  </nav>
+</div>
+<nav class="mpeople" aria-label="Kim bo'yicha">
+  {% for p in person_links %}<a class="{% if p.username == 'all' %}all{% endif %}{% if p.on %} on{% endif %}" href="{{ p.href }}">{% if p.initial %}<span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{% endif %}{{ p.label }}</a>{% endfor %}
+</nav>
+<nav class="mpeople mco" aria-label="Kompaniya bo'yicha">
+  {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}{% if c.key %} keep{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
+</nav>
+<main class="board">
+  {% if overdue %}
+  <section class="col late" aria-label="Kechikkan">
+    <div class="ch">Kechikkan <span class="c">{{ overdue|length }}</span></div>
+    {% for t in overdue %}{% include "vazifalar/_card.html" with late=True show_who=True show_date=True %}{% endfor %}
+  </section>
+  {% endif %}
+  {% for day in days %}
+  <section class="col{% if day.is_today %} today{% endif %}{% if day.is_past %} past{% endif %}{% if not day.tasks and not day.done_count %} empty{% endif %}">
+    <div class="ch">{{ day.dm }} · {% if day.is_today %}<span class="tag">Bugun</span> · {% endif %}<span class="wd">{{ day.wd }}</span> <span class="c">{{ day.tasks|length }}</span></div>
+    {% for t in day.tasks %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=False %}{% endfor %}
+    {% if day.done_count %}<div class="donelink">✓ {{ day.done_count }} ta bajarildi</div>{% endif %}
+    {% if me.can_create and not day.is_past %}<button class="addline" type="button" onclick="openAdd('{{ day.iso }}')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 2v10M2 7h10"/></svg>Vazifa qo'shish</button>{% elif not day.tasks and not day.done_count %}<p class="none">Vazifa yo'q</p>{% endif %}
+  </section>
+  {% endfor %}
+</main>
+{% endblock %}

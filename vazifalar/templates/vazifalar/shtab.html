@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Shtab{% endblock %}
+{% block body %}
+<div class="page wide">
+  <div class="head">
+    <div><h1>Shtab</h1><div class="sub">{{ today_dm }} – {{ end_dm }}: kechikkan, shu hafta, o'tgan haftada bajarilgan</div></div>
+    <button class="btn noprint" type="button" onclick="window.print()">Chop etish</button>
+  </div>
+  <nav class="mpeople mco always noprint" aria-label="Kompaniya bo'yicha">
+    {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
+  </nav>
+  {% for r in rows %}
+  <section class="grp person" style="--p:{{ r.p.color }}">
+    <h2><span class="av" style="--p:{{ r.p.color }}">{{ r.p.initial }}</span>{{ r.p.name }}
+      <span class="c">{% if r.late %}<span class="lateby">{{ r.late|length }} kechikkan</span> · {% endif %}{{ r.soon|length }} shu hafta · {{ r.done }} bajarildi</span></h2>
+    <table class="st">
+      <tbody>
+      {% for t in r.late %}<tr class="late-r"><td class="d">{{ t.dm }}</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>{% if t.company %} <span class="co keep">#{{ t.company_label }}</span>{% endif %}</td><td class="s">{{ t.late_text }}</td></tr>{% endfor %}
+      {% for t in r.soon %}<tr><td class="d">{{ t.dm }}</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{{ t.title }}</a>{% if t.company %} <span class="co keep">#{{ t.company_label }}</span>{% endif %}</td><td class="s"></td></tr>{% endfor %}
+      {% if not r.late and not r.soon %}<tr><td colspan="3" class="none">Ochiq vazifa yo'q</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </section>
+  {% empty %}
+  <p class="none" style="padding-top:18px">Hali vazifa yo'q.</p>
+  {% endfor %}
+</div>
+{% endblock %}

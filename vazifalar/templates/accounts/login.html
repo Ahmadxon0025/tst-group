@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Kirish · {{ product_title }}{% endblock %}
+{% block anon %}
+<form class="login" method="post" action="/kirish/">{% csrf_token %}
+  <h1>{{ product_title }}</h1>
+  <input type="hidden" name="next" value="{{ next }}">
+  <div><label class="lbl" for="u">Login</label><input id="u" type="text" name="username" autocomplete="username" autocapitalize="none" required></div>
+  <div><label class="lbl" for="pw">Parol</label><input id="pw" type="password" name="password" autocomplete="current-password" required></div>
+  <button class="btn pri" type="submit">Kirish</button>
+</form>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% load static %}<!doctype html>
+<html lang="uz" data-script="{% if me.is_cyrl %}cyrl{% else %}latn{% endif %}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{{ product_title }}{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'app.css' %}">
+</head>
+<body>
+{% if me %}
+<div class="shell">
+  <aside class="side" aria-label="Menyu">
+    <div class="user"><span class="av" style="--p:{{ me.color }}">{{ me.initial }}</span>{{ me.name }}</div>
+    {% if me.can_create %}<button class="addbtn" type="button" onclick="openAdd()"><span class="plus" aria-hidden="true">+</span>Vazifa qo'shish</button>{% endif %}
+    <a class="nav-i{% if request.path == '/' and side_kim == 'all' and not side_k %} on{% endif %}" href="/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="12" rx="2"/><path d="M2.5 7h13M6 2v3M12 2v3"/></svg>Hafta</a>
+    <a class="nav-i{% if request.path == '/mening/' %} on{% endif %}" href="/mening/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="6.5" r="3"/><path d="M3.5 15.5c.8-2.8 3-4 5.5-4s4.7 1.2 5.5 4"/></svg>Mening vazifalarim{% if my_open %}<span class="n">{{ my_open }}</span>{% endif %}</a>
+    <a class="nav-i{% if request.path == '/shtab/' %} on{% endif %}" href="/shtab/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h12M3 9h12M3 13.5h7"/></svg>Shtab</a>
+    <a class="nav-i{% if request.path == '/telegram/' %} on{% endif %}" href="/telegram/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.5 3L2.5 8.2l4.6 1.6L9 15l2.3-3.6 4.2-8.4zM7.1 9.8L15.5 3"/></svg>Telegram{% if not me.telegram_user_id %}<span class="n late">!</span>{% endif %}</a>
+    <h3>Odamlar</h3>
+    {% for p in side_people %}
+    <a class="nav-i{% if side_kim == p.username %} on{% endif %}" href="/?kim={{ p.username }}"><span class="av xs" style="--p:{{ p.color }}">{{ p.initial }}</span>{{ p.name }}{% if p.late_n %}<span class="n late" title="Kechikkan">{{ p.late_n }}</span>{% elif p.open_n %}<span class="n">{{ p.open_n }}</span>{% endif %}</a>
+    {% endfor %}
+    <h3>Kompaniyalar</h3>
+    {% for k, label in companies %}
+    <a class="nav-i{% if side_k == k %} on{% endif %}" href="/?k={{ k }}"><span class="hash" aria-hidden="true">#</span><span class="keep">{{ label }}</span></a>
+    {% endfor %}
+    <div class="bottom">
+      <form method="post" action="/yozuv/">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="keep">{% if me.is_cyrl %}Lotincha yozuv{% else %}Кирилл ёзув{% endif %}</button></form>
+      <a class="nav-i" href="/parol/" style="color:var(--muted)">Parolni o'zgartirish</a>
+      <form method="post" action="/chiqish/">{% csrf_token %}<button type="submit">Chiqish</button></form>
+    </div>
+  </aside>
+  <div class="main">
+    <nav class="mtop" aria-label="Bo'limlar">
+      <a href="/" class="{% if request.path == '/' %}on{% endif %}">Hafta</a>
+      <a href="/mening/" class="{% if request.path == '/mening/' %}on{% endif %}">Menga</a>
+      <a href="/shtab/" class="{% if request.path == '/shtab/' %}on{% endif %}">Shtab</a>
+      <form method="post" action="/yozuv/">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="keep" aria-label="Yozuvni almashtirish">{% if me.is_cyrl %}Lot{% else %}Кир{% endif %}</button></form>
+    </nav>
+    {% block body %}{% endblock %}
+  </div>
+</div>
+{% if me.can_create %}
+<button class="fab" type="button" onclick="openAdd()" aria-label="Vazifa qo'shish">+</button>
+{% include "vazifalar/_add_dialog.html" %}
+{% endif %}
+{% else %}
+{% block anon %}{% endblock %}
+{% endif %}
+{% if messages %}<div class="msgs" id="msgs">{% for m in messages %}<div class="msg {{ m.tags }}" role="status">{{ m }}</div>{% endfor %}</div>
+<script>setTimeout(function(){var m=document.getElementById('msgs');if(m)m.remove();},3500)</script>{% endif %}
+<script src="{% static 'translit.js' %}"></script>
+</body>
+</html>

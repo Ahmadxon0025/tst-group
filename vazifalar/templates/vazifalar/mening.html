@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Mening vazifalarim{% endblock %}
+{% block body %}
+<div class="page">
+  <div class="head"><div><h1>Mening vazifalarim</h1></div></div>
+  {% for title, cls, items in groups %}
+  {% if items or cls != 'late' %}
+  <section class="grp {{ cls }}-g">
+    <h2>{{ title }} <span class="c">{{ items|length }}</span></h2>
+    <div class="list">
+      {% for t in items %}{% if cls == 'late' %}{% include "vazifalar/_card.html" with late=True show_who=False show_date=True %}{% else %}{% include "vazifalar/_card.html" with late=False show_who=False show_date=True %}{% endif %}{% empty %}<p class="none">{% if cls == 'today' %}Bugunga vazifa yo'q{% elif cls == 'next' %}Keyingi kunlarga vazifa yo'q{% else %}Hali yo'q{% endif %}</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  {% endfor %}
+  {% if given %}
+  <section class="grp">
+    <h2>Men bergan vazifalar <span class="c">{{ given|length }}</span></h2>
+    <div class="list">
+      {% for t in given %}{% if t.late_text %}{% include "vazifalar/_card.html" with late=True show_who=True show_date=True %}{% else %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=True %}{% endif %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ t.title }}{% endblock %}
+{% block body %}
+<div class="page">
+  <a class="back" href="{{ back }}">‹ Orqaga</a>
+  <section class="tblock">
+    <span class="status {{ t.status }}">{{ t.get_status_display }}</span>
+    <h1>{{ t.title }}</h1>
+    <div class="facts">
+      <span class="who"><span class="av" style="--p:{{ t.assignee.color }}">{{ t.assignee.initial }}</span><b>{{ t.assignee.name }}</b></span>
+      <span>Muddat: <b>{{ due_dm }}</b></span>
+      <span>Bergan: <b>{{ t.created_by.name }}</b></span>
+      {% if t.company %}<span>Kompaniya: <b class="keep">{{ t.company_label }}</b></span>{% endif %}
+    </div>
+    {% if t.status != 'bekor' and can_touch %}
+    <form method="post" action="/vazifa/{{ t.pk }}/belgi/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+      <button class="btn{% if not t.is_done %} pri{% endif %}" type="submit">{% if t.is_done %}Qayta ochish{% else %}Bajarildi ✓{% endif %}</button></form>
+    {% endif %}
+  </section>
+  {% if t.status != 'bekor' %}
+  <section class="sect">
+    {% if can_touch %}
+    <form method="post" action="/vazifa/{{ t.pk }}/izoh/" style="display:flex;flex-direction:column;gap:8px">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+      <label class="lbl" for="izoh" style="margin:0">Izoh</label>
+      <textarea id="izoh" name="text" maxlength="2000" required placeholder="Nima qilindi, nima kutilmoqda"></textarea>
+      <div><button class="btn" type="submit">Izohni saqlash</button></div>
+    </form>
+    {% endif %}
+    {% if can_manage %}
+    <details class="manage"><summary>Boshqaga o'tkazish, muddat, kompaniya, bekor qilish</summary>
+      <form class="row" method="post" action="/vazifa/{{ t.pk }}/kimga/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+        <select name="kim" aria-label="Kimga o'tkazish">{% for p in people %}<option value="{{ p.username }}"{% if p.pk == t.assignee_id %} selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+        <button class="btn" type="submit">Boshqaga o'tkazish</button></form>
+      <form class="row" method="post" action="/vazifa/{{ t.pk }}/muddat/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+        <input type="date" name="due" value="{{ t.due_date|date:'Y-m-d' }}" required aria-label="Yangi muddat">
+        <button class="btn" type="submit">Muddatni o'zgartirish</button></form>
+      <form class="row" method="post" action="/vazifa/{{ t.pk }}/kompaniya/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+        <select name="company" aria-label="Kompaniya"><option value="">Yo'q</option>{% for k, label in companies %}<option value="{{ k }}"{% if t.company == k %} selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+        <button class="btn" type="submit">Kompaniyani saqlash</button></form>
+      <form class="row" method="post" action="/vazifa/{{ t.pk }}/bekor/">{% csrf_token %}<input type="hidden" name="next" value="{{ here }}">
+        <input type="text" name="reason" required minlength="3" maxlength="300" placeholder="Bekor qilish sababi" aria-label="Bekor qilish sababi">
+        <button class="btn danger" type="submit">Bekor qilish</button></form>
+    </details>
+    {% endif %}
+  </section>
+  {% endif %}
+  <section class="sect" style="border-bottom:none">
+    <h2>Tarix</h2>
+    <ul class="hist">
+      {% for e in events %}
+      <li><span class="av" style="--p:{{ e.actor.color }}">{{ e.actor.initial }}</span>
+        <div class="txt"><span><b>{{ e.actor.name }}</b> — {{ e.get_kind_display|lower }}{% if e.source == 'telegram' %} (Telegram orqali){% endif %}{% if e.kind == 'muddat' %}: {{ e.old_due|date:'d.m' }} → {{ e.new_due|date:'d.m' }}{% endif %}{% if e.kind == 'kimga' %}: {{ e.old_assignee.name }} → {{ e.new_assignee.name }}{% endif %}{% if e.kind == 'yaratildi' and e.new_assignee %} ({{ e.new_assignee.name }}ga){% endif %}</span>
+          {% if e.note %}<div class="note">{{ e.note|linebreaksbr }}</div>{% endif %}
+          <small>{{ e.when }}</small></div></li>
+      {% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

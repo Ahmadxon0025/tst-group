@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Telegram{% endblock %}
+{% block body %}
+<div class="page">
+  <div class="head"><div><h1>Telegram</h1><div class="sub">{% if linked %}Ulangan ✓{% else %}Hali ulanmagan{% endif %}</div></div></div>
+  <section class="sect">
+    <p style="margin:0">Telegram ulansa: yangi vazifa, har kuni 08:00 da ro'yxat, 18:00 da eslatma keladi. «Bajarildi» tugmasini Telegramdan bosish mumkin.</p>
+    {% if link %}
+      <a class="btn pri" href="{{ link }}" style="align-self:flex-start;height:40px">Telegramda ochish</a>
+      <p class="none">Havola {{ minutes }} daqiqa ishlaydi va faqat bir marta.</p>
+    {% elif code %}
+      <p>Botga shu xabarni yuboring: <b class="keep">/start {{ code }}</b></p>
+      <p class="none">Kod {{ minutes }} daqiqa ishlaydi va faqat bir marta.</p>
+    {% else %}
+      <form method="post">{% csrf_token %}<button class="btn pri" type="submit" style="height:40px">{% if linked %}Qayta ulash{% else %}Telegramni ulash{% endif %}</button></form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
