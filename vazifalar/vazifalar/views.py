@@ -251,6 +251,34 @@ def create(request):
     return redirect(_back(request))
 
 
+MAX_BULK = 60   # CORE: lines accepted in one paste
+
+
+@login_required
+@require_POST
+def bulk_create(request):
+    """Paste many lines into the bar: each non-empty line becomes one task, parsed like a single line."""
+    from vazifalar.quick import parse_text
+    me = request.account
+    lines = [l.strip(" -•\t") for l in (request.POST.get("lines") or "").splitlines()]
+    lines = [l for l in lines if l][:MAX_BULK]
+    made, failed = 0, []
+    for raw in lines:
+        p = parse_text(raw)
+        who = UserAccount.objects.filter(username=p.who or me.username, is_active=True).first()
+        try:
+            sv.create_task(me, p.title or raw, who, p.due, company=p.company or "", important=p.important,
+                           repeat=p.repeat, private=p.private)
+            made += 1
+        except sv.NotAllowed as e:
+            failed.append(f"{raw[:40]}: {e}")
+    if made:
+        messages.success(request, f"{made} ta vazifa qo'shildi.")
+    for f in failed[:5]:
+        messages.error(request, f)
+    return JsonResponse({"ok": True, "made": made, "failed": failed})
+
+
 @login_required
 def quick_preview(request):
     from vazifalar.quick import preview

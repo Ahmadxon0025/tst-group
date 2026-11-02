@@ -22,6 +22,20 @@
   var qb = document.getElementById("qbar"), qc = document.getElementById("qbar-chips");
   if (qb && qc) {
     var qt;
+    // paste several lines at once → one task per line (after a confirm)
+    qb.addEventListener("paste", function (e) {
+      var text = (e.clipboardData || window.clipboardData).getData("text");
+      var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+      if (lines.length < 2) return;
+      e.preventDefault();
+      var msg = lines.length + " ta vazifa qo'shilsinmi? (har qator — bitta vazifa)";
+      if (window.toCyrillic && document.documentElement.dataset.script === "cyrl") msg = window.toCyrillic(msg);
+      if (!confirm(msg)) return;
+      var fd = new FormData(); fd.append("lines", lines.join("\n"));
+      fetch("/vazifa/kop/", {method: "POST", body: fd, credentials: "same-origin", headers: {"X-CSRFToken": csrf}})
+        .then(function () { location.reload(); })
+        .catch(function () { toast("Qo'shilmadi. Qayta urinib ko'ring."); });
+    });
     function chip(t, cls) { return '<span class="qa-chip ' + (cls || '') + '">' + t.replace(/</g, "&lt;") + "</span>"; }
     qb.addEventListener("input", function () {
       clearTimeout(qt);

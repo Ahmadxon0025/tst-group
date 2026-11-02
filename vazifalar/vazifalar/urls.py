@@ -9,6 +9,7 @@ urlpatterns = [
     path("yozuv/", views.set_script, name="script"),
     path("vazifa/yangi/", views.create, name="create"),
     path("vazifa/tahlil/", views.quick_preview, name="quick_preview"),
+    path("vazifa/kop/", views.bulk_create, name="bulk_create"),
     path("vazifa/<int:pk>/", views.detail, name="detail"),
     path("vazifa/<int:pk>/belgi/", views.toggle, name="toggle"),
     path("vazifa/<int:pk>/bekor/", views.cancel, name="cancel"),

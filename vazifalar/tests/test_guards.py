@@ -330,3 +330,16 @@ def test_onlooker_card_has_no_active_tick(client, boss, ali, vali):
     login(client, ali)
     page = client.get("/").content.decode()
     assert f'action="/vazifa/{t.pk}/belgi/"' not in page and 'tick ro' in page
+
+
+def test_bulk_paste_makes_one_task_per_line(client, boss, ali, worker):
+    login(client, boss)
+    r = client.post("/vazifa/kop/", {"lines": "Birinchi ertaga @ali #tst !\n\n- Ikkinchi juma maxfiy\nUchinchi"})
+    assert r.json()["made"] == 3
+    a, b, c = (Vazifa.objects.get(title=t) for t in ("Birinchi", "Ikkinchi", "Uchinchi"))
+    assert a.assignee == ali and a.important and a.company == "tst"
+    assert b.private and b.assignee == boss and b.due_date is not None
+    assert c.due_date is None
+    client.post("/chiqish/")
+    login(client, worker)
+    assert client.post("/vazifa/kop/", {"lines": "x\ny"}).json()["made"] == 0
