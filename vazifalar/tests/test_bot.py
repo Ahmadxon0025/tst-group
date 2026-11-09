@@ -182,6 +182,7 @@ def test_weekly_summary_to_bosh_only(tg, boss, ali):
     schedule.tick(_at(monday, 9, 10))
     w = Outbox.objects.filter(key__startswith="weekly:")
     assert w.count() == 1 and w.get().chat_id == 999
+    assert "Xulosa" in w.get().text and "Panel" in w.get().text
 
 
 def test_telegram_page_makes_one_time_link(client, ali, settings):

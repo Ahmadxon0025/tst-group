@@ -403,3 +403,43 @@ details.manage .row+.row{margin-top:8px}
   .trend{gap:3px;height:120px}
   .tday .dw{display:none}
 }
+
+/* ---- Panel v2: boxes, summary, clickable numbers, activity ---- */
+.page.xwide{max-width:1240px}
+.hbtns{display:flex;gap:8px}
+.live{color:var(--faint);font-weight:400}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.dgrid.top{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}
+.box{border:1px solid var(--card-line);border-radius:12px;padding:16px 18px;background:var(--card);min-width:0}
+.page>.box{margin-top:16px}
+.box h2{margin:0 0 12px;font-size:14px;font-weight:700;display:flex;gap:6px;align-items:baseline}
+.box h2 .c{font-weight:400;font-size:12px;color:var(--faint)}
+.sum{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:7px;font-size:14px;line-height:1.45}
+.sum li::marker{color:var(--accent)}
+.dgrid.top .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));padding-top:0;align-content:start}
+a.tile{text-decoration:none;color:inherit}
+a.tile:hover{border-color:var(--accent);background:var(--accent-soft)}
+.tile .ts.up{color:var(--green)}
+.tile .ts.dn{color:var(--red)}
+.sbar a.seg{display:block;height:100%}
+.sbar a.seg:hover{filter:brightness(1.12)}
+.legend a{display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:inherit}
+.legend a:hover{color:var(--ink)}
+a.pcell{text-decoration:none;color:inherit}
+a.pcell:hover .pnum{color:var(--accent)}
+.pt td a{color:inherit}
+.st td.s.ok{color:var(--muted)}
+.more{display:inline-block;margin-top:10px;font-size:13px;color:var(--accent);text-decoration:none}
+.more:hover{text-decoration:underline}
+.act{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.act li{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.4}
+.act li:last-child{border-bottom:none}
+.act li .av{margin-top:2px}
+.act li div{flex:1;min-width:0;overflow-wrap:anywhere}
+.act li a{text-decoration:none;color:var(--ink)}
+.act li a:hover{text-decoration:underline}
+.act .ex{color:var(--muted)}
+.act time{font-size:12px;color:var(--faint);white-space:nowrap}
+@media (max-width:1000px){.dgrid,.dgrid.top{grid-template-columns:1fr}}
+@media (max-width:760px){.box{padding:14px}.hbtns .btn:first-child{display:none}}
+@media (max-width:760px){.pbar{display:none}.box{overflow-x:auto}.pt td,.pt th{padding-left:4px;padding-right:4px}}

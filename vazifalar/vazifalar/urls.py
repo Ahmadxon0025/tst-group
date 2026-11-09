@@ -8,6 +8,7 @@ urlpatterns = [
     path("shtab/", views.shtab, name="shtab"),
     path("panel/", panel.panel, name="panel"),
     path("bajarildi/", panel.bajarildi, name="bajarildi"),
+    path("royxat/", panel.royxat, name="royxat"),
     path("yozuv/", views.set_script, name="script"),
     path("vazifa/yangi/", views.create, name="create"),
     path("vazifa/tahlil/", views.quick_preview, name="quick_preview"),

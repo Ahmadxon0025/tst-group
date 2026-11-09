@@ -82,9 +82,11 @@ def weekly(today) -> None:
         open_n = mine.filter(status=Vazifa.YANGI).count()
         late = mine.filter(status=Vazifa.YANGI, due_date__lt=today).count()
         lines.append(T.WEEKLY_ROW.format(name=p.name, done=done, open=open_n, late=late))
+    from vazifalar.panel import stats, summary_lines   # the same rule-written summary as the Panel
     for u in _linked():
         if u.sees_all:
-            enqueue(u, f"weekly:{u.pk}:{today}", "\n".join(lines))
+            summary = ["", T.WEEKLY_SUMMARY_HEAD] + [f"• {x}" for x in summary_lines(stats(u, today))]
+            enqueue(u, f"weekly:{u.pk}:{today}", "\n".join(lines + summary + ["", T.WEEKLY_LINK]))
 
 
 def tick(now=None) -> None:  # CORE: reusable
