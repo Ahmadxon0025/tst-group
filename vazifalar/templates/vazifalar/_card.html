@@ -7,7 +7,7 @@
   <div class="body">
     <a class="t js-open" href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}" data-id="{{ t.pk }}">{% if t.important %}<span class="impmark" title="Muhim">!</span> {% endif %}{{ t.title }}</a>
     <div class="foot">
-      {% if late %}<span class="lateby">{{ t.dm }} · {{ t.late_text }}</span>{% elif show_date %}<span>{{ t.dm }}</span>{% endif %}
+      {% if late %}<span class="lateby">{{ t.dm }} · {{ t.late_text }}</span>{% elif show_date %}<span>{{ t.dm }}</span>{% if t.is_done and t.late_text %}<span class="lateby">{{ t.late_text }}</span>{% endif %}{% endif %}
       {% if t.izoh_count %}<span class="chip" title="Izohlar"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h10v7H7l-3 3v-3H3z"/></svg>{{ t.izoh_count }}</span>{% endif %}
       {% if show_who %}<span class="who"><span class="av xs" style="--p:{{ t.assignee.color }}">{{ t.assignee.initial }}</span>{{ t.assignee.name }}</span>{% endif %}
       {% if t.private %}<span class="chip" title="Maxfiy">🔒</span>{% endif %}

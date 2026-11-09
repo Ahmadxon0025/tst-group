@@ -27,6 +27,8 @@
     {% if me.can_create %}<button class="addbtn" type="button" onclick="openAdd()"><span class="plus" aria-hidden="true">+</span>Vazifa qo'shish</button>{% endif %}
     <a class="nav-i{% if request.path == '/' and side_kim == 'all' and not side_k %} on{% endif %}" href="/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="12" rx="2"/><path d="M2.5 7h13M6 2v3M12 2v3"/></svg>Hafta</a>
     <a class="nav-i{% if request.path == '/mening/' %} on{% endif %}" href="/mening/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="6.5" r="3"/><path d="M3.5 15.5c.8-2.8 3-4 5.5-4s4.7 1.2 5.5 4"/></svg>Mening vazifalarim{% if my_open %}<span class="n">{{ my_open }}</span>{% endif %}</a>
+    <a class="nav-i{% if request.path == '/panel/' %} on{% endif %}" href="/panel/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 15V9M7.5 15V4M12 15v-4M15.5 15H2.5"/></svg>Panel</a>
+    <a class="nav-i{% if request.path == '/bajarildi/' %} on{% endif %}" href="/bajarildi/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="6.5"/><path d="M6 9.2l2 2 4-4.2"/></svg>Bajarilgan</a>
     <a class="nav-i{% if request.path == '/shtab/' %} on{% endif %}" href="/shtab/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5h12M3 9h12M3 13.5h7"/></svg>Shtab</a>
     <a class="nav-i{% if request.path == '/telegram/' %} on{% endif %}" href="/telegram/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M15.5 3L2.5 8.2l4.6 1.6L9 15l2.3-3.6 4.2-8.4zM7.1 9.8L15.5 3"/></svg>Telegram{% if not me.telegram_user_id %}<span class="n late">!</span>{% endif %}</a>
     <h3>Odamlar</h3>
@@ -49,6 +51,7 @@
     <nav class="mtop" aria-label="Bo'limlar">
       <a href="/" class="{% if request.path == '/' %}on{% endif %}">Hafta</a>
       <a href="/mening/" class="{% if request.path == '/mening/' %}on{% endif %}">Menga</a>
+      <a href="/panel/" class="{% if request.path == '/panel/' %}on{% endif %}">Panel</a>
       <a href="/shtab/" class="{% if request.path == '/shtab/' %}on{% endif %}">Shtab</a>
       <form method="post" action="/yozuv/">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="keep" aria-label="Yozuvni almashtirish">{% if me.is_cyrl %}Lot{% else %}Кир{% endif %}</button></form>
     </nav>

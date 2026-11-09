@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+{% block body %}
+<div class="page wide">
+  <div class="head">
+    <div><h1>Panel{% if company %} · <span class="keep">{{ company_label }}</span>{% endif %}</h1><div class="sub">{{ today_dm }} holatiga</div></div>
+    <a class="btn" href="/bajarildi/">Bajarilganlar</a>
+  </div>
+  <nav class="mpeople mco always" aria-label="Kompaniya bo'yicha">
+    {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}{% if forloop.counter > 1 %} keep{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
+  </nav>
+
+  <section class="tiles" aria-label="Umumiy">
+    {% for x in tiles %}<div class="tile {{ x.cls }}"><div class="tl">{{ x.label }}</div><div class="tn">{% if x.n is None %}—{% else %}{{ x.n }}{% if x.pct %}<small>%</small>{% endif %}{% endif %}</div>{% if x.sub %}<div class="ts">{{ x.sub }}</div>{% endif %}</div>{% endfor %}
+  </section>
+
+  <section class="grp">
+    <h2>Ochiq vazifalar qachonga <span class="c">{{ n_open }}</span></h2>
+    {% if n_open %}
+    <div class="sbar" role="img" aria-label="{% for b in bar %}{{ b.label }} {{ b.n }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+      {% for b in bar %}{% if b.n %}<span class="seg s-{{ b.key }}" style="width:{{ b.w|stringformat:".2f" }}%" title="{{ b.label }}: {{ b.n }}"></span>{% endif %}{% endfor %}
+    </div>
+    <div class="legend">{% for b in bar %}<span><i class="dot s-{{ b.key }}"></i>{{ b.label }} <b>{{ b.n }}</b></span>{% endfor %}</div>
+    {% else %}<p class="none">Ochiq vazifa yo'q</p>{% endif %}
+  </section>
+
+  <section class="grp">
+    <h2>Odamlar bo'yicha</h2>
+    {% if people %}
+    <table class="pt">
+      <thead><tr><th>Kim</th><th class="barcol">Ochiq</th><th class="n">Kechikkan</th><th class="n">Bugun</th><th class="n">Bajardi · 7 kun</th><th class="n">O'z vaqtida</th></tr></thead>
+      <tbody>
+      {% for r in people %}
+      <tr>
+        <td><a class="pn" href="/?kim={{ r.p.username }}"><span class="av" style="--p:{{ r.p.color }}">{{ r.p.initial }}</span>{{ r.p.name }}</a></td>
+        <td class="barcol"><div class="pcell"><div class="pbar">{% for s in r.segs %}<span class="seg s-{{ s.key }}" style="width:{{ s.w|stringformat:".2f" }}%" title="{{ s.n }}"></span>{% endfor %}</div><span class="pnum">{{ r.open }}</span></div></td>
+        <td class="n{% if r.c.late %} bad{% endif %}">{{ r.c.late }}</td>
+        <td class="n">{{ r.c.today }}</td>
+        <td class="n good">{{ r.done7 }}</td>
+        <td class="n">{% if r.ontime is None %}—{% else %}{{ r.ontime }}%{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<p class="none">Hali vazifa yo'q.</p>{% endif %}
+  </section>
+
+  <section class="grp">
+    <h2>Oxirgi 14 kun <span class="c">{{ trend_done }} bajarildi · {{ trend_added }} qo'shildi</span></h2>
+    <div class="trend" role="img" aria-label="Har kuni bajarilgan va qo'shilgan vazifalar">
+      {% for x in trend %}
+      <div class="tday{% if x.is_today %} on{% endif %}{% if x.is_mon %} mon{% endif %}" title="{{ x.dm }}: {{ x.done }} bajarildi, {{ x.added }} qo'shildi">
+        <div class="bars"><span class="b done" style="height:{{ x.hd|stringformat:".2f" }}%"></span><span class="b added" style="height:{{ x.ha|stringformat:".2f" }}%"></span></div>
+        <div class="dl">{{ x.dm }}</div><div class="dw">{{ x.wd }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="legend"><span><i class="dot s-done"></i>Bajarildi</span><span><i class="dot s-added"></i>Qo'shildi</span></div>
+  </section>
+
+  <div class="two">
+    {% if company_rows %}
+    <section class="grp">
+      <h2>Kompaniyalar</h2>
+      <table class="pt">
+        <thead><tr><th>Kompaniya</th><th class="n">Ochiq</th><th class="n">Kechikkan</th><th class="n">Bajarildi · 7 kun</th></tr></thead>
+        <tbody>{% for c in company_rows %}<tr><td>{% if c.key %}<a class="keep" href="/panel/?k={{ c.key }}">#{{ c.label }}</a>{% else %}<span class="muted">{{ c.label }}</span>{% endif %}</td><td class="n">{{ c.open }}</td><td class="n{% if c.late %} bad{% endif %}">{{ c.late }}</td><td class="n good">{{ c.done7 }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+    {% endif %}
+    <section class="grp">
+      <h2>Eng uzoq kechikkanlar</h2>
+      {% if oldest %}
+      <table class="st"><tbody>
+        {% for t in oldest %}<tr class="late-r"><td class="d">{{ t.dm }}</td><td><a href="/vazifa/{{ t.pk }}/?next={{ here|urlencode }}">{% if t.important %}! {% endif %}{{ t.title }}</a> <span class="who"><span class="av xs" style="--p:{{ t.assignee.color }}">{{ t.assignee.initial }}</span>{{ t.assignee.name }}</span></td><td class="s">{{ t.late_text }}</td></tr>{% endfor %}
+      </tbody></table>
+      {% else %}<p class="none">Kechikkan vazifa yo'q 👍</p>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -109,6 +109,7 @@ def hafta(request):
         tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: (not t.important, t.created_at)))
         days.append({"iso": d.isoformat(), "dm": dates.day_month_short(d), "wd": cfg.DAY_LONG[d.weekday()],
                      "is_today": d == today, "is_past": d < today, "tasks": tasks,
+                     "done": mark(sorted((t for t in on_day if t.is_done), key=lambda t: t.done_at or t.created_at)),
                      "done_count": sum(1 for t in on_day if t.is_done)})
 
     q = {"w": w, "kim": who.username if who else "all"}

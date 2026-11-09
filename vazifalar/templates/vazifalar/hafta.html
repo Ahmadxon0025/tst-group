@@ -39,7 +39,7 @@
   <section class="col{% if day.is_today %} today{% endif %}{% if day.is_past %} past{% endif %}{% if not day.tasks and not day.done_count %} empty{% endif %}"{% if not day.is_past %} data-date="{{ day.iso }}"{% endif %}>
     <div class="ch">{{ day.dm }} · {% if day.is_today %}<span class="tag">Bugun</span> · {% endif %}<span class="wd">{{ day.wd }}</span> <span class="c js-count">{{ day.tasks|length }}</span></div>
     {% for t in day.tasks %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=False %}{% endfor %}
-    {% if day.done_count %}<div class="donelink">✓ {{ day.done_count }} ta bajarildi</div>{% endif %}
+    {% if day.done %}<details class="donelink donebox"><summary>✓ {{ day.done|length }} ta bajarildi</summary><div class="donelist">{% for t in day.done %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=False %}{% endfor %}</div></details>{% endif %}
     {% if me.can_create and not day.is_past %}<button class="addline" type="button" onclick="openAdd('{{ day.iso }}')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M7 2v10M2 7h10"/></svg>Vazifa qo'shish</button>{% elif not day.tasks and not day.done_count %}<p class="none">Vazifa yo'q</p>{% endif %}
   </section>
   {% endfor %}

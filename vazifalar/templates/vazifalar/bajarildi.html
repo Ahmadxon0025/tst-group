@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Bajarilgan{% endblock %}
+{% block body %}
+<div class="page">
+  <div class="head">
+    <div><h1>Bajarilgan{% if who %} · {{ who.name }}{% endif %}</h1>
+      <div class="sub">{{ n }} ta vazifa{% if ontime is not None %} · {{ ontime }}% o'z vaqtida{% endif %}</div></div>
+    <a class="btn" href="/panel/">Panel</a>
+  </div>
+  <nav class="mpeople always" aria-label="Davr">{% for x in period_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
+  <nav class="mpeople always" aria-label="Kim bo'yicha">{% for x in person_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
+  <nav class="mpeople mco always" aria-label="Kompaniya bo'yicha">{% for x in company_links %}<a class="all{% if x.on %} on{% endif %}{% if forloop.counter > 1 %} keep{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
+
+  {% for g in groups %}
+  <section class="grp done-g">
+    <h2>{{ g.label }} <span class="c">{{ g.items|length }}</span></h2>
+    <div class="list">
+      {% for t in g.items %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=True %}{% endfor %}
+    </div>
+  </section>
+  {% empty %}
+  <p class="none" style="padding-top:18px">Bu davrda bajarilgan vazifa yo'q.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -333,3 +333,73 @@ details.manage .row+.row{margin-top:8px}
 .side-hidden .page{padding-left:64px}
 @media (max-width:760px){.side-hidden .page{padding-left:16px}}
 .side-hidden .page .head{padding-left:0}.side-hidden .page .qbar{margin-left:0}
+
+/* ---- done under each day, Bajarilgan page ---- */
+.donebox summary{cursor:pointer;list-style:none;display:inline-flex;gap:4px;padding:2px;border-radius:4px}
+.donebox summary::-webkit-details-marker{display:none}
+.donebox summary:hover{color:var(--green)}
+.donebox[open] summary{color:var(--green);margin-bottom:6px}
+.donelist{display:flex;flex-direction:column;gap:6px}
+.donelist .card{opacity:.75}
+.grp.done-g h2{color:var(--green)}
+.card.done .foot .lateby{margin-left:-4px}
+
+/* ---- Panel (dashboard) ---- */
+.tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;padding-top:18px}
+.tile{border:1px solid var(--card-line);border-radius:10px;padding:12px 14px;background:var(--card);min-width:0}
+.tile .tl{font-size:12px;color:var(--muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .tn{font-size:28px;font-weight:700;line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.tile .tn small{font-size:16px;font-weight:600;margin-left:1px}
+.tile .ts{font-size:12px;color:var(--faint);margin-top:2px}
+.tile.bad .tn{color:var(--red)}
+.tile.good .tn{color:var(--green)}
+.s-late{background:var(--red)}
+.s-today{background:var(--accent)}
+.s-week{background:color-mix(in srgb,var(--accent) 55%,var(--bg))}
+.s-later{background:color-mix(in srgb,var(--accent) 25%,var(--bg))}
+.s-nodate{background:var(--tick)}
+.s-done{background:var(--green)}
+.s-added{background:color-mix(in srgb,var(--ink) 22%,var(--bg))}
+.sbar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--hover)}
+.sbar .seg{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend b{color:var(--ink);font-weight:600}
+.dot{display:inline-block;width:9px;height:9px;border-radius:3px}
+.pt{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.pt th{font-size:12px;font-weight:500;color:var(--muted);text-align:left;padding:4px 6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pt td{padding:9px 6px;border-bottom:1px solid var(--line);font-size:14px}
+.pt .n{text-align:right;width:92px}
+.pt td.bad{color:var(--red);font-weight:600}
+.pt td.good{color:var(--green)}
+.pt a{text-decoration:none}
+.pt a:hover{text-decoration:underline}
+.pt .pn{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.pt .barcol{width:38%}
+.pcell{display:flex;align-items:center;gap:8px}
+.pbar{flex:1;display:flex;height:10px;gap:2px;min-width:40px}
+.pbar .seg{display:block;height:100%;border-radius:2px}
+.pnum{width:28px;text-align:right;font-weight:600}
+.muted{color:var(--muted)}
+.trend{display:flex;gap:6px;align-items:flex-end;height:150px;padding-top:6px}
+.tday{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;height:100%}
+.tday .bars{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:2px}
+.tday .b{display:block;width:42%;max-width:14px;border-radius:3px 3px 0 0;min-height:1px}
+.tday .b.done{background:var(--green)}
+.tday .b.added{background:color-mix(in srgb,var(--ink) 22%,var(--bg))}
+.tday .dl{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.tday .dw{font-size:10px;color:var(--faint)}
+.tday.on .dl,.tday.on .dw{color:var(--accent);font-weight:600}
+.tday.mon{border-left:1px dashed var(--line);padding-left:3px}
+.two{display:grid;grid-template-columns:1fr 1.4fr;gap:28px}
+.st .who{font-size:12px;color:var(--muted);margin-left:6px;white-space:nowrap}
+@media (max-width:900px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}.two{grid-template-columns:1fr}}
+@media (max-width:760px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile .tn{font-size:24px}
+  .pt .n{width:auto}
+  .pt th:nth-child(4),.pt td:nth-child(4),.pt th:nth-child(6),.pt td:nth-child(6){display:none}
+  .pt .barcol{width:auto}
+  .trend{gap:3px;height:120px}
+  .tday .dw{display:none}
+}

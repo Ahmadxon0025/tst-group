@@ -1,11 +1,13 @@
 from django.urls import path
 
-from vazifalar import views
+from vazifalar import panel, views
 
 urlpatterns = [
     path("", views.hafta, name="hafta"),
     path("mening/", views.mening, name="mening"),
     path("shtab/", views.shtab, name="shtab"),
+    path("panel/", panel.panel, name="panel"),
+    path("bajarildi/", panel.bajarildi, name="bajarildi"),
     path("yozuv/", views.set_script, name="script"),
     path("vazifa/yangi/", views.create, name="create"),
     path("vazifa/tahlil/", views.quick_preview, name="quick_preview"),
