@@ -75,6 +75,11 @@
 <div id="toast" class="msgs" hidden><div class="msg error" id="toast-msg"></div></div>
 <script src="{% static 'board.js' %}"></script>{% endif %}
 <script src="{% static 'translit.js' %}"></script>
+<script>(function(){ // keep the menu where it was after a click (it is a new page each time)
+  var s=document.getElementById('side');if(!s)return;
+  try{var y=sessionStorage.getItem('tst-side-y');if(y)s.scrollTop=+y;}catch(e){}
+  window.addEventListener('pagehide',function(){try{sessionStorage.setItem('tst-side-y',s.scrollTop);}catch(e){}});
+})();</script>
 <script>function tstSide(open){document.documentElement.classList.toggle('side-hidden',!open);try{localStorage.setItem('tst-side',open?'open':'closed');}catch(e){}}</script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){});}</script>
 </body>

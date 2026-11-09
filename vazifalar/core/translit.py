@@ -56,6 +56,11 @@ def _letters(text: str) -> str:
             i += 2
             continue
         pair = (ch + nxt)
+        after = text[i + 2] if i + 2 < n else ""
+        if pair.lower() == "yo" and after and after in APOS:   # yo' → йў ("Yo'nalish"), not ёъ
+            out.append(_case(ch, "й"))
+            i += 1
+            continue
         if pair.lower() in PAIRS:
             src = pair if nxt.isupper() else ch
             out.append(_case(src, PAIRS[pair.lower()]))

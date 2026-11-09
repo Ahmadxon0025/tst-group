@@ -31,3 +31,10 @@ from core.translit import to_cyrillic
 ])
 def test_to_cyrillic(latin, cyr):
     assert to_cyrillic(latin) == cyr
+
+
+def test_yo_before_apostrophe_is_y_plus_o_tick():
+    from core.translit import to_cyrillic
+    assert to_cyrillic("Yo'nalishlar") == "Йўналишлар"
+    assert to_cyrillic("yo'q") == "йўқ"
+    assert to_cyrillic("Yozuv") == "Ёзув"

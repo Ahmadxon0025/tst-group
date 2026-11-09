@@ -13,7 +13,9 @@
   function tr(t){var o="",i=0,n=t.length;while(i<n){var c=t[i],lo=c.toLowerCase(),nx=t[i+1]||"",pv=i>0?t[i-1]:"";
       var ws=!isA(pv)&&APOS.indexOf(pv)<0||pv==="";
       if((lo==="o"||lo==="g")&&nx&&APOS.indexOf(nx)>=0){o+=cs(c,lo==="o"?"ў":"ғ");i+=2;continue;}
-      var pr=(c+nx).toLowerCase();if(nx&&PAIRS[pr]){o+=cs(isU(nx)?c+nx:c,PAIRS[pr]);i+=2;continue;}
+      var pr=(c+nx).toLowerCase(),af=t[i+2]||"";
+      if(pr==="yo"&&af&&APOS.indexOf(af)>=0){o+=cs(c,"й");i++;continue;}
+      if(nx&&PAIRS[pr]){o+=cs(isU(nx)?c+nx:c,PAIRS[pr]);i+=2;continue;}
       if(lo==="e"){o+=cs(c,(ws||VOW.indexOf(pv)>=0)?"э":"е");i++;continue;}
       if(APOS.indexOf(c)>=0&&isA(pv)){o+="ъ";i++;continue;}
       if(S[lo]){o+=cs(c,S[lo]);i++;continue;}o+=c;i++;}return o;}
