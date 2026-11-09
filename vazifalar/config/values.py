@@ -67,7 +67,7 @@ COMPANIES = [
 # (key, label, extra quick-add words after "/"). Cyrillic forms are made automatically.
 CATEGORIES = [
     ("bank", "Bank", ["nbu"]),
-    ("moliya", "Moliya va qarzlar", ["qarz", "qarzlar", "pul", "kassa"]),
+    ("moliya", "Moliya va qarzlar", ["qarz", "qarzlar", "pul", "kassa", "buxgalteriya", "buxgalter", "hisob", "hisobot", "akt", "sverka"]),
     ("huquq", "Huquq va davlat", ["sud", "soliq", "davlat", "yurist", "mib"]),
     ("ishlab", "Ishlab chiqarish", ["ishlabchiqarish", "sex", "boyoq", "bo'yoq", "tamir", "ta'mir"]),
     ("savdo", "Savdo", ["sotuv", "buyurtma", "mijoz"]),

@@ -80,3 +80,9 @@ def test_telegram_message_starting_with_category_is_a_task(monkeypatch, boss):
                                                                "message": {"chat": {"id": 999}}}})
     t = Vazifa.objects.get()
     assert (t.title, t.category) == ("NBU xati", "bank")
+
+
+def test_accounting_words_go_to_moliya():
+    cats = category_handles()
+    for w in ("/buxgalteriya", "/hisob", "/sverka", "/бухгалтерия"):
+        assert parse(f"Akt sverka {w}", D, {}, {}, cats).category == "moliya", w
