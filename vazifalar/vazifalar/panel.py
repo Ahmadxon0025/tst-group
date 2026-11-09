@@ -13,7 +13,7 @@ from config import values as cfg
 from core import dates
 from vazifalar import services as sv
 from vazifalar.models import Vazifa, VazifaEvent
-from vazifalar.views import _flags, _with_counts
+from vazifalar.views import _flags, _with_counts, category_filter, category_label
 
 TREND_DAYS = 14                 # CORE: days shown in the done/added chart
 ONTIME_WINDOW = 30              # CORE: on-time % looks at tasks done in the last N days
@@ -63,19 +63,21 @@ def _split(ts, today):
     return c
 
 
-def _list_link(h, kim="", k=""):
-    return "/royxat/?" + urlencode({x: y for x, y in (("h", h), ("kim", kim), ("k", k)) if y})
+def _list_link(h, kim="", k="", c=""):
+    return "/royxat/?" + urlencode({x: y for x, y in (("h", h), ("kim", kim), ("k", k), ("c", c)) if y})
 
 
-def _done_link(kim="", k="", d=7):
-    return "/bajarildi/?" + urlencode({x: y for x, y in (("d", d), ("kim", kim), ("k", k)) if y})
+def _done_link(kim="", k="", d=7, c=""):
+    return "/bajarildi/?" + urlencode({x: y for x, y in (("d", d), ("kim", kim), ("k", k), ("c", c)) if y})
 
 
-def stats(me, today, company=""):
+def stats(me, today, company="", category=""):
     """Everything the Panel and the Monday Telegram summary need, from what `me` may see."""
     base = sv.visible_tasks(me).exclude(status=Vazifa.BEKOR)
     if company:
         base = base.filter(company=company)
+    if category:
+        base = base.filter(category=category)
     open_ts = list(base.filter(status=Vazifa.YANGI))
     since = today - timedelta(days=max(TREND_DAYS, ONTIME_WINDOW) - 1)
     done_ts = list(base.filter(status=Vazifa.BAJARILDI, done_at__date__gte=since))
@@ -128,6 +130,13 @@ def summary_lines(st):
         days = (st["today"] - worst["oldest"]).days if worst["oldest"] else 0
         lines.append(f"{total['late']} ta vazifa kechikkan; eng ko'pi {worst['p'].name}da "
                      f"({worst['c']['late']} ta, eng eskisi {days} kun).")
+        by_cat = {}
+        for t in st["open"]:
+            if t.category and bucket(t, st["today"]) == "late":
+                by_cat[t.category] = by_cat.get(t.category, 0) + 1
+        if by_cat:
+            k = max(by_cat, key=by_cat.get)
+            lines.append(f"Eng ko'p kechikkan yo'nalish: {category_label(k)} ({by_cat[k]} ta).")
     else:
         lines.append("Kechikkan vazifa yo'q.")
     if st["ontime"] is not None:
@@ -175,31 +184,32 @@ def panel(request):
     me = request.account
     today = dates.today()
     company = _company(request)
-    st = stats(me, today, company)
+    cat = category_filter(request)
+    st = stats(me, today, company, cat)
     total, n_open = st["total"], len(st["open"])
 
     tiles = [
-        {"label": "Ochiq", "n": n_open, "href": _list_link("open", k=company)},
-        {"label": "Kechikkan", "n": total["late"], "cls": "bad" if total["late"] else "", "href": _list_link("late", k=company)},
-        {"label": "Bugun", "n": total["today"], "href": _list_link("today", k=company)},
-        {"label": "Rejasiz", "n": total["nodate"], "href": _list_link("nodate", k=company)},
-        {"label": "Bajarildi · 7 kun", "n": len(st["done7"]), "cls": "good", "href": _done_link(k=company),
+        {"label": "Ochiq", "n": n_open, "href": _list_link("open", k=company, c=cat)},
+        {"label": "Kechikkan", "n": total["late"], "cls": "bad" if total["late"] else "", "href": _list_link("late", k=company, c=cat)},
+        {"label": "Bugun", "n": total["today"], "href": _list_link("today", k=company, c=cat)},
+        {"label": "Rejasiz", "n": total["nodate"], "href": _list_link("nodate", k=company, c=cat)},
+        {"label": "Bajarildi · 7 kun", "n": len(st["done7"]), "cls": "good", "href": _done_link(k=company, c=cat),
          "delta": _delta(len(st["done7"]), len(st["done_prev"])), "good_up": True},
         {"label": "Qo'shildi · 7 kun", "n": st["added7"], "delta": _delta(st["added7"], st["added_prev"])},
-        {"label": "O'z vaqtida · 30 kun", "n": st["ontime"], "pct": True, "href": _done_link(k=company, d=30)},
+        {"label": "O'z vaqtida · 30 kun", "n": st["ontime"], "pct": True, "href": _done_link(k=company, d=30, c=cat)},
     ]
     bar = [{"key": k, "label": lbl, "n": total[k], "w": (100 * total[k] / n_open) if n_open else 0,
-            "href": _list_link(k, k=company)} for k, lbl in BUCKETS]
+            "href": _list_link(k, k=company, c=cat)} for k, lbl in BUCKETS]
 
     people = st["people"]
     biggest = max((r["open"] for r in people), default=0) or 1
     for r in people:
         u = r["p"].username
         r["segs"] = [{"key": k, "n": r["c"][k], "w": 100 * r["c"][k] / biggest} for k, _ in BUCKETS if r["c"][k]]
-        r["href_open"] = _list_link("open", u, company)
-        r["href_late"] = _list_link("late", u, company)
-        r["href_today"] = _list_link("today", u, company)
-        r["href_done"] = _done_link(u, company)
+        r["href_open"] = _list_link("open", u, company, cat)
+        r["href_late"] = _list_link("late", u, company, cat)
+        r["href_today"] = _list_link("today", u, company, cat)
+        r["href_done"] = _done_link(u, company, c=cat)
 
     companies = []
     if not company:
@@ -209,6 +219,18 @@ def panel(request):
             if o or d:
                 companies.append({"key": k, "label": lbl, "open": len(o), "done7": d,
                                   "late": sum(1 for t in o if bucket(t, today) == "late")})
+
+    categories = []
+    if not cat:
+        for k, lbl, _ in list(cfg.CATEGORIES) + [("", "Yo'nalishsiz", [])]:
+            o = [t for t in st["open"] if t.category == k]
+            d = sum(1 for t in st["done7"] if t.category == k)
+            if o or d or k:
+                categories.append({"key": k, "label": lbl, "open": len(o), "done7": d,
+                                   "late": sum(1 for t in o if bucket(t, today) == "late"),
+                                   "href_open": _list_link("open", k=company, c=k) if k else "",
+                                   "href_late": _list_link("late", k=company, c=k) if k else "",
+                                   "href": "/panel/?" + urlencode({x: y for x, y in (("k", company), ("c", k)) if y})})
 
     added = {}
     for d in st["created"]:
@@ -235,17 +257,27 @@ def panel(request):
         t.late_text = f"{(today - t.due_date).days} kun" if t.is_late else ("bugun" if t.due_date == today
                                                                           else cfg.DAY_LONG[t.due_date.weekday()])
 
-    here = "/panel/" + (f"?k={company}" if company else "")
+    qs = urlencode({x: y for x, y in (("k", company), ("c", cat)) if y})
+    here = "/panel/" + (f"?{qs}" if qs else "")
+
+    def plink(**kw):
+        q = {"k": company, "c": cat}
+        q.update(kw)
+        q = urlencode({x: y for x, y in q.items() if y})
+        return "/panel/" + (f"?{q}" if q else "")
     return render(request, "vazifalar/panel.html", {
         "summary": summary_lines(st), "tiles": tiles, "bar": bar, "n_open": n_open, "people": people,
-        "company_rows": companies, "trend": trend, "trend_done": sum(x["done"] for x in trend),
+        "company_rows": companies, "category_rows": categories, "category": cat,
+        "category_label": category_label(cat),
+        "category_links": [{"label": "Hammasi", "href": plink(c=""), "on": not cat}] + [
+            {"label": lbl, "href": plink(c=k), "on": cat == k} for k, lbl, _ in cfg.CATEGORIES], "trend": trend, "trend_done": sum(x["done"] for x in trend),
         "trend_added": sum(x["added"] for x in trend), "due": due[:12], "due_more": max(0, len(due) - 12),
-        "due_href": _list_link("due", k=company), "activity": _activity(me, company, today),
+        "due_href": _list_link("due", k=company, c=cat), "activity": _activity(me, company, today),
         "today_dm": dates.day_month(today), "now_hm": timezone.localtime().strftime("%H:%M"),
         "refresh": REFRESH_SECONDS, "company": company, "here": here,
         "company_label": dict(cfg.COMPANIES).get(company, ""),
-        "company_links": [{"label": "Hammasi", "href": "/panel/", "on": not company}] + [
-            {"label": lbl, "href": f"/panel/?k={k}", "on": company == k} for k, lbl in cfg.COMPANIES],
+        "company_links": [{"label": "Hammasi", "href": plink(k=""), "on": not company}] + [
+            {"label": lbl, "href": plink(k=k), "on": company == k} for k, lbl in cfg.COMPANIES],
     })
 
 
@@ -258,6 +290,7 @@ def royxat(request):
     if h not in LIST_KINDS:
         h = "open"
     company = _company(request)
+    cat = category_filter(request)
     who = None
     kim = request.GET.get("kim") or ""
     if kim:
@@ -267,6 +300,8 @@ def royxat(request):
         qs = qs.filter(assignee=who)
     if company:
         qs = qs.filter(company=company)
+    if cat:
+        qs = qs.filter(category=cat)
     tasks = list(_with_counts(qs))
     if h == "due":
         tasks = [t for t in tasks if bucket(t, today) in ("late", "today", "week")]
@@ -281,7 +316,7 @@ def royxat(request):
             t.late_text = f"{(today - t.due_date).days} kun kechikdi"
 
     def link(**kw):
-        q = {"h": h, "kim": who.username if who else "", "k": company}
+        q = {"h": h, "kim": who.username if who else "", "k": company, "c": cat}
         q.update(kw)
         return "/royxat/?" + urlencode({x: y for x, y in q.items() if y})
     title = LIST_KINDS[h]
@@ -289,8 +324,10 @@ def royxat(request):
         title += f" · {who.name}"
     if company:
         title += f" · {dict(cfg.COMPANIES)[company]}"
+    if cat:
+        title += f" · {category_label(cat)}"
     return render(request, "vazifalar/royxat.html", {
-        "title": title, "tasks": tasks, "here": link(), "back": "/panel/" + (f"?k={company}" if company else ""),
+        "title": title, "tasks": tasks, "here": link(), "back": "/panel/?" + urlencode({x: y for x, y in (("k", company), ("c", cat)) if y}),
         "kind_links": [{"label": lbl, "href": link(h=key), "on": h == key}
                        for key, lbl in [("open", "Ochiq"), ("due", "Shu hafta yoki kechikkan")] + BUCKETS],
         "person_links": [{"label": "Hammasi", "href": link(kim=""), "on": who is None}] + [
@@ -298,6 +335,8 @@ def royxat(request):
             for p in sv.assignable_people()],
         "company_links": [{"label": "Hammasi", "href": link(k=""), "on": not company}] + [
             {"label": lbl, "href": link(k=key), "on": company == key} for key, lbl in cfg.COMPANIES],
+        "category_links": [{"label": "Hammasi", "href": link(c=""), "on": not cat}] + [
+            {"label": lbl, "href": link(c=key), "on": cat == key} for key, lbl, _ in cfg.CATEGORIES],
     })
 
 
@@ -313,6 +352,7 @@ def bajarildi(request):
     if days not in DONE_PERIODS:
         days = 7
     company = _company(request)
+    cat = category_filter(request)
     who = None
     kim = request.GET.get("kim") or "all"
     if kim != "all":
@@ -323,9 +363,11 @@ def bajarildi(request):
         qs = qs.filter(assignee=who)
     if company:
         qs = qs.filter(company=company)
+    if cat:
+        qs = qs.filter(category=cat)
     tasks = _flags(me, list(_with_counts(qs).order_by("-done_at")))
 
-    q = {"d": days, "kim": who.username if who else "all", "k": company}
+    q = {"d": days, "kim": who.username if who else "all", "k": company, "c": cat}
 
     def link(**kw):
         return "/bajarildi/?" + urlencode({k: v for k, v in dict(q, **kw).items() if v not in ("", None)})
@@ -358,4 +400,6 @@ def bajarildi(request):
              "on": who is not None and who.pk == p.pk} for p in sv.assignable_people()],
         "company_links": [{"label": "Hammasi", "href": link(k=""), "on": not company}] + [
             {"label": lbl, "href": link(k=k), "on": company == k} for k, lbl in cfg.COMPANIES],
+        "category_links": [{"label": "Hammasi", "href": link(c=""), "on": not cat}] + [
+            {"label": lbl, "href": link(c=k), "on": cat == k} for k, lbl, _ in cfg.CATEGORIES],
     })

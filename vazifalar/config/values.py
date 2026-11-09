@@ -63,6 +63,19 @@ COMPANIES = [
     ("guruh", "Guruh"),
 ]
 
+# Areas of work ("Yo'nalish") — one per task, next to the company tag. Changed only by a Shtab decision.
+# (key, label, extra quick-add words after "/"). Cyrillic forms are made automatically.
+CATEGORIES = [
+    ("bank", "Bank", ["nbu"]),
+    ("moliya", "Moliya va qarzlar", ["qarz", "qarzlar", "pul", "kassa"]),
+    ("huquq", "Huquq va davlat", ["sud", "soliq", "davlat", "yurist", "mib"]),
+    ("ishlab", "Ishlab chiqarish", ["ishlabchiqarish", "sex", "boyoq", "bo'yoq", "tamir", "ta'mir"]),
+    ("savdo", "Savdo", ["sotuv", "buyurtma", "mijoz"]),
+    ("taminot", "Ta'minot", ["ta'minot", "boz", "bo'z", "kimyo"]),
+    ("loyiha", "Loyihalar va investitsiya", ["loyihalar", "investitsiya", "invest", "xitoy"]),
+    ("jamoa", "Jamoa va tizim", ["tizim", "kadr", "xodim"]),
+]
+
 # Writing script per person: "latn" (Lotin) or "cyrl" (Kirill). New people start with this.
 DEFAULT_SCRIPT = "latn"
 

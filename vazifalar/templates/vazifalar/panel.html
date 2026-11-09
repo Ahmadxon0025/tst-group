@@ -3,12 +3,15 @@
 {% block body %}
 <div class="page xwide">
   <div class="head">
-    <div><h1>Panel{% if company %} · <span class="keep">{{ company_label }}</span>{% endif %}</h1>
+    <div><h1>Panel{% if company %} · <span class="keep">{{ company_label }}</span>{% endif %}{% if category %} · {{ category_label }}{% endif %}</h1>
       <div class="sub">{{ today_dm }} · <span class="live" title="Sahifa har {{ refresh }} soniyada o'zi yangilanadi">yangilandi {{ now_hm }}</span></div></div>
     <div class="hbtns"><a class="btn" href="/royxat/?h=due{% if company %}&k={{ company }}{% endif %}">Shu hafta</a><a class="btn" href="/bajarildi/">Bajarilganlar</a></div>
   </div>
   <nav class="mpeople mco always" aria-label="Kompaniya bo'yicha">
     {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}{% if forloop.counter > 1 %} keep{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
+  </nav>
+  <nav class="mpeople mco always" aria-label="Yo'nalish bo'yicha">
+    {% for c in category_links %}<a class="all{% if c.on %} on{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
   </nav>
 
   <div class="dgrid top">
@@ -90,15 +93,26 @@
     </section>
   </div>
 
-  {% if company_rows %}
-  <section class="box">
-    <h2>Kompaniyalar</h2>
-    <table class="pt">
-      <thead><tr><th>Kompaniya</th><th class="n">Ochiq</th><th class="n">Kechikkan</th><th class="n">Bajarildi · 7 kun</th></tr></thead>
-      <tbody>{% for c in company_rows %}<tr><td>{% if c.key %}<a class="keep" href="/panel/?k={{ c.key }}">#{{ c.label }}</a>{% else %}<span class="muted">{{ c.label }}</span>{% endif %}</td><td class="n">{% if c.key %}<a href="/royxat/?h=open&k={{ c.key }}">{{ c.open }}</a>{% else %}{{ c.open }}{% endif %}</td><td class="n{% if c.late %} bad{% endif %}">{% if c.key %}<a href="/royxat/?h=late&k={{ c.key }}">{{ c.late }}</a>{% else %}{{ c.late }}{% endif %}</td><td class="n good">{{ c.done7 }}</td></tr>{% endfor %}</tbody>
-    </table>
-  </section>
-  {% endif %}
+  <div class="dgrid">
+    {% if category_rows %}
+    <section class="box">
+      <h2>Yo'nalishlar</h2>
+      <table class="pt">
+        <thead><tr><th>Yo'nalish</th><th class="n">Ochiq</th><th class="n">Kechikkan</th><th class="n">Bajarildi · 7 kun</th></tr></thead>
+        <tbody>{% for c in category_rows %}<tr><td>{% if c.key %}<a href="{{ c.href }}">{{ c.label }}</a>{% else %}<span class="muted">{{ c.label }}</span>{% endif %}</td><td class="n">{% if c.href_open %}<a href="{{ c.href_open }}">{{ c.open }}</a>{% else %}{{ c.open }}{% endif %}</td><td class="n{% if c.late %} bad{% endif %}">{% if c.href_late %}<a href="{{ c.href_late }}">{{ c.late }}</a>{% else %}{{ c.late }}{% endif %}</td><td class="n good">{{ c.done7 }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+    {% endif %}
+    {% if company_rows %}
+    <section class="box">
+      <h2>Kompaniyalar</h2>
+      <table class="pt">
+        <thead><tr><th>Kompaniya</th><th class="n">Ochiq</th><th class="n">Kechikkan</th><th class="n">Bajarildi · 7 kun</th></tr></thead>
+        <tbody>{% for c in company_rows %}<tr><td>{% if c.key %}<a class="keep" href="/panel/?k={{ c.key }}">#{{ c.label }}</a>{% else %}<span class="muted">{{ c.label }}</span>{% endif %}</td><td class="n">{% if c.key %}<a href="/royxat/?h=open&k={{ c.key }}">{{ c.open }}</a>{% else %}{{ c.open }}{% endif %}</td><td class="n{% if c.late %} bad{% endif %}">{% if c.key %}<a href="/royxat/?h=late&k={{ c.key }}">{{ c.late }}</a>{% else %}{{ c.late }}{% endif %}</td><td class="n good">{{ c.done7 }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </section>
+    {% endif %}
+  </div>
 </div>
 <script>
 (function(){ // reloads itself while on screen (ClickUp's auto refresh) — never while a dialog is open or the tab is hidden

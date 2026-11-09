@@ -46,6 +46,7 @@
             var h = chip(j.due_label ? "📅 " + j.due_label : "📥 Rejasiz");
             h += chip("👤 " + (j.who_name || "Men"));
             if (j.company) h += chip("#" + j.company_label, "keep");
+            if (j.category) h += chip("/" + j.category_label);
             if (j.important) h += chip("❗ Muhim", "imp");
             if (j.private) h += chip("🔒 Maxfiy");
             if (j.repeat) h += chip("🔁 " + j.repeat_label);

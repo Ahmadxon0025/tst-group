@@ -12,6 +12,7 @@
       {% if show_who %}<span class="who"><span class="av xs" style="--p:{{ t.assignee.color }}">{{ t.assignee.initial }}</span>{{ t.assignee.name }}</span>{% endif %}
       {% if t.private %}<span class="chip" title="Maxfiy">🔒</span>{% endif %}
       {% if t.repeat %}<span class="chip" title="{{ t.repeat_label }}">🔁</span>{% endif %}
+      {% if t.category %}<span class="cat" title="Yo'nalish">/{{ t.category_label }}</span>{% endif %}
       {% if t.company %}<span class="co keep">#{{ t.company_label }}</span>{% endif %}
     </div>
   </div>

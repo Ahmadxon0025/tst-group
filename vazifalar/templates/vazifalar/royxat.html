@@ -9,6 +9,7 @@
   <nav class="mpeople always" aria-label="Qaysi vazifalar">{% for x in kind_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
   <nav class="mpeople always" aria-label="Kim bo'yicha">{% for x in person_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
   <nav class="mpeople mco always" aria-label="Kompaniya bo'yicha">{% for x in company_links %}<a class="all{% if x.on %} on{% endif %}{% if forloop.counter > 1 %} keep{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
+  <nav class="mpeople mco always" aria-label="Yo'nalish bo'yicha">{% for x in category_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
   <section class="grp">
     <div class="list">
       {% for t in tasks %}{% if t.late %}{% include "vazifalar/_card.html" with late=True show_who=True show_date=True %}{% else %}{% include "vazifalar/_card.html" with late=False show_who=True show_date=True %}{% endif %}{% empty %}<p class="none">Bu ro'yxatda vazifa yo'q 👍</p>{% endfor %}

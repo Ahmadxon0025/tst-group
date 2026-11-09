@@ -25,7 +25,7 @@
     <button class="side-x" type="button" onclick="tstSide(false)" aria-label="Menyuni yopish" title="Menyuni yopish"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2"/><path d="M6 3v10M10.5 6.5 9 8l1.5 1.5"/></svg></button>
     <div class="user"><span class="av" style="--p:{{ me.color }}">{{ me.initial }}</span>{{ me.name }}</div>
     {% if me.can_create %}<button class="addbtn" type="button" onclick="openAdd()"><span class="plus" aria-hidden="true">+</span>Vazifa qo'shish</button>{% endif %}
-    <a class="nav-i{% if request.path == '/' and side_kim == 'all' and not side_k %} on{% endif %}" href="/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="12" rx="2"/><path d="M2.5 7h13M6 2v3M12 2v3"/></svg>Hafta</a>
+    <a class="nav-i{% if request.path == '/' and side_kim == 'all' and not side_k and not side_c %} on{% endif %}" href="/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="13" height="12" rx="2"/><path d="M2.5 7h13M6 2v3M12 2v3"/></svg>Hafta</a>
     <a class="nav-i{% if request.path == '/mening/' %} on{% endif %}" href="/mening/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="6.5" r="3"/><path d="M3.5 15.5c.8-2.8 3-4 5.5-4s4.7 1.2 5.5 4"/></svg>Mening vazifalarim{% if my_open %}<span class="n">{{ my_open }}</span>{% endif %}</a>
     <a class="nav-i{% if request.path == '/panel/' %} on{% endif %}" href="/panel/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 15V9M7.5 15V4M12 15v-4M15.5 15H2.5"/></svg>Panel</a>
     <a class="nav-i{% if request.path == '/bajarildi/' %} on{% endif %}" href="/bajarildi/"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="9" cy="9" r="6.5"/><path d="M6 9.2l2 2 4-4.2"/></svg>Bajarilgan</a>
@@ -38,6 +38,10 @@
     <h3>Kompaniyalar</h3>
     {% for k, label in companies %}
     <a class="nav-i{% if side_k == k %} on{% endif %}" href="/?k={{ k }}"><span class="hash" aria-hidden="true">#</span><span class="keep">{{ label }}</span></a>
+    {% endfor %}
+    <h3>Yo'nalishlar</h3>
+    {% for k, label in categories %}
+    <a class="nav-i{% if side_c == k %} on{% endif %}" href="/?c={{ k }}"><span class="hash" aria-hidden="true">/</span>{{ label }}</a>
     {% endfor %}
     <div class="bottom">
       <form method="post" action="/yozuv/">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button type="submit" class="keep">{% if me.is_cyrl %}Lotincha yozuv{% else %}Кирилл ёзув{% endif %}</button></form>

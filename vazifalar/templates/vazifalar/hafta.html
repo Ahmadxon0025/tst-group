@@ -23,6 +23,9 @@
 <nav class="mpeople mco" aria-label="Kompaniya bo'yicha">
   {% for c in company_links %}<a class="all{% if c.on %} on{% endif %}{% if c.key %} keep{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
 </nav>
+<nav class="mpeople mco" aria-label="Yo'nalish bo'yicha">
+  {% for c in category_links %}<a class="all{% if c.on %} on{% endif %}" href="{{ c.href }}">{{ c.label }}</a>{% endfor %}
+</nav>
 <main class="board">
   <section class="col inbox" data-date="" aria-label="Rejasiz">
     <div class="ch">Rejasiz <span class="c js-count">{{ inbox|length }}</span></div>

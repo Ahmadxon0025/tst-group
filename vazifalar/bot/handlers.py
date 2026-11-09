@@ -160,11 +160,13 @@ def quick_ask(chat_id, user, text):
     s = _session(user)
     s.state = "quick"
     s.data = {"title": p.title[:cfg.TASK_TITLE_MAX], "who": who.username, "due": due.isoformat() if due else "",
-              "co": p.company or "", "imp": p.important, "rep": p.repeat, "prv": p.private}
+              "co": p.company or "", "cat": p.category or "", "imp": p.important, "rep": p.repeat, "prv": p.private}
     s.save()
     extra = ""
     if p.company:
         extra += f" · #{dict(cfg.COMPANIES)[p.company]}"
+    if p.category:
+        extra += " · /" + {k: lbl for k, lbl, _ in cfg.CATEGORIES}[p.category]
     if p.important:
         extra += " · ❗"
     if p.private:
@@ -199,6 +201,9 @@ def _finish_new(chat_id, user, s):
 
 
 # --- dispatch ---------------------------------------------------------------------------------------
+COMMANDS = {"/bekor", "/bugun", "/hafta", "/kechikkan", "/yangi"}
+
+
 def handle_message(msg: dict) -> None:
     chat = msg.get("chat") or {}
     if chat.get("type") != "private":
@@ -216,6 +221,10 @@ def handle_message(msg: dict) -> None:
     if user is None:
         return _reply(chat_id, None, T.NOT_LINKED)
     cmd = text.split("@")[0].split()[0].lower() if text.startswith("/") else ""
+    if cmd and cmd not in COMMANDS:
+        from vazifalar.quick import category_handles
+        if cmd[1:] in category_handles():
+            cmd = ""                                       # "/bank NBU xati ertaga" → quick add
     if cmd == "/bekor":
         _clear(user)
         return _reply(chat_id, user, T.CANCELLED_FLOW)
@@ -281,7 +290,7 @@ def handle_callback(cq: dict) -> None:
         try:
             t = sv.create_task(user, d.get("title", ""), who, _date.fromisoformat(d["due"]) if d.get("due") else None, source=TG,
                                company=d.get("co", ""), important=bool(d.get("imp")), repeat=d.get("rep", ""),
-                               private=bool(d.get("prv")))
+                               private=bool(d.get("prv")), category=d.get("cat", ""))
         except (sv.NotAllowed, KeyError, ValueError) as e:
             return _reply(chat_id, user, str(e))
         return _reply(chat_id, user, T.NEW_OK.format(title=t.title, who=t.assignee.name, due=dates.day_month(t.due_date)))

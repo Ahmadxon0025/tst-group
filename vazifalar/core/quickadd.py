@@ -6,7 +6,7 @@ core/quickadd.py — one line of plain Uzbek → a task's parts (Todoist-style q
     "Shtab hisoboti har dushanba @fayzullo"          → repeats weekly on Monday, first due = next Monday
 
 Understood: bugun · ertaga · indinga · weekday names · "3 kundan keyin" / "3 kun" · "5-noyabr" / "5 noyabr" ·
-"05.11" · "har kuni" · "har hafta" · "har <weekday>" · "har oy" · "har oy 5" · "!" / "muhim" · @person · #company.
+"05.11" · "/bank" (area of work) · "har kuni" · "har hafta" · "har <weekday>" · "har oy" · "har oy 5" · "!" / "muhim" · @person · #company.
 Whatever is not understood stays in the title.
 """
 import re
@@ -44,6 +44,7 @@ class Parsed:  # CORE: reusable
     due: date | None = None
     who: str | None = None          # username
     company: str | None = None      # company key
+    category: str | None = None     # area-of-work key ("/bank")
     important: bool = False
     private: bool = False
     repeat: str = ""                # "" | "daily" | "weekly" | "weekly:<0-6>" | "monthly" | "monthly:<1-31>"
@@ -92,8 +93,9 @@ def next_repeat(rule: str, after: date, today: date) -> date | None:  # CORE: re
     return None
 
 
-def parse(text: str, today: date, people: dict, companies: dict) -> Parsed:  # CORE: reusable
-    """people: {lowercase handle: username} (usernames and first names); companies: {lowercase: key}."""
+def parse(text: str, today: date, people: dict, companies: dict, categories: dict | None = None) -> Parsed:  # CORE: reusable
+    """people: {lowercase handle: username} (usernames and first names); companies / categories: {lowercase: key}."""
+    categories = categories or {}
     words = (text or "").split()
     keep = [True] * len(words)
     p = Parsed()
@@ -122,6 +124,9 @@ def parse(text: str, today: date, people: dict, companies: dict) -> Parsed:  # C
             if c:
                 p.company = c
                 eat(1, "company")
+        elif w.startswith("/") and len(w) > 1 and categories.get(_norm(w[1:])):
+            p.category = categories[_norm(w[1:])]
+            eat(1, "category")
         elif n in IMPORTANT:
             p.important = True
             eat(1, "important")

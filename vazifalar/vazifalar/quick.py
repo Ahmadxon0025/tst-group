@@ -35,9 +35,21 @@ def handles():  # CORE: reusable — "@abdurazzoq", "@fayzullo_oka", "@fayzulloo
     return people, companies
 
 
+def category_handles():  # CORE: reusable — "/bank", "/moliya", "/qarz", "/банк" …
+    out = {}
+    for k, label, extra in cfg.CATEGORIES:
+        words = [k, label.split()[0].lower(), label.lower().replace(" ", "")] + list(extra)
+        for w in words:
+            w = w.lower()
+            out[w] = k
+            out[w.replace("'", "")] = k
+            out[to_cyrillic(w).lower()] = k
+    return out
+
+
 def parse_text(text: str):  # CORE: reusable
     people, companies = handles()
-    return parse(text, dates.today(), people, companies)
+    return parse(text, dates.today(), people, companies, category_handles())
 
 
 def preview(text: str) -> dict:  # CORE: reusable — what the add window shows while typing
@@ -49,5 +61,6 @@ def preview(text: str) -> dict:  # CORE: reusable — what the add window shows 
         "title": p.title, "due": p.due.isoformat() if p.due else "", "due_label": dates.day_month(p.due) if p.due else "",
         "who": p.who or "", "who_name": names.get(p.who, ""), "company": p.company or "",
         "company_label": dict(cfg.COMPANIES).get(p.company, ""), "important": p.important, "private": p.private,
+        "category": p.category or "", "category_label": {k: lbl for k, lbl, _ in cfg.CATEGORIES}.get(p.category, ""),
         "repeat": p.repeat, "repeat_label": rep,
     }

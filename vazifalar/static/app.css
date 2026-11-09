@@ -443,3 +443,4 @@ a.pcell:hover .pnum{color:var(--accent)}
 @media (max-width:1000px){.dgrid,.dgrid.top{grid-template-columns:1fr}}
 @media (max-width:760px){.box{padding:14px}.hbtns .btn:first-child{display:none}}
 @media (max-width:760px){.pbar{display:none}.box{overflow-x:auto}.pt td,.pt th{padding-left:4px;padding-right:4px}}
+.cat{font-size:12px;color:var(--accent);opacity:.85}

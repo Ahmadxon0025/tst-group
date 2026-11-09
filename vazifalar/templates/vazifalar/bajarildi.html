@@ -10,6 +10,7 @@
   <nav class="mpeople always" aria-label="Davr">{% for x in period_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
   <nav class="mpeople always" aria-label="Kim bo'yicha">{% for x in person_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
   <nav class="mpeople mco always" aria-label="Kompaniya bo'yicha">{% for x in company_links %}<a class="all{% if x.on %} on{% endif %}{% if forloop.counter > 1 %} keep{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
+  <nav class="mpeople mco always" aria-label="Yo'nalish bo'yicha">{% for x in category_links %}<a class="all{% if x.on %} on{% endif %}" href="{{ x.href }}">{{ x.label }}</a>{% endfor %}</nav>
 
   {% for g in groups %}
   <section class="grp done-g">

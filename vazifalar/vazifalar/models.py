@@ -26,6 +26,7 @@ class Vazifa(LedgerModel):  # CORE: reusable
     due_date = models.DateField(null=True, blank=True)   # empty = "Rejasiz": written down, not yet planned
     status = models.CharField(max_length=12, choices=STATUSES, default=YANGI)
     company = models.CharField(max_length=20, blank=True, default="")     # key from CONFIG COMPANIES, optional
+    category = models.CharField(max_length=20, blank=True, default="")    # "Yo'nalish": key from CONFIG CATEGORIES
     important = models.BooleanField(default=False)                         # "Muhim": shown first, red
     private = models.BooleanField(default=False)                           # "Maxfiy": only giver, doer and bosh see it
     repeat = models.CharField(max_length=20, blank=True, default="")      # "", daily, weekly[:wd], monthly[:day]
@@ -57,6 +58,11 @@ class Vazifa(LedgerModel):  # CORE: reusable
         return ""
 
     @property
+    def category_label(self) -> str:
+        from config import values as cfg
+        return {k: lbl for k, lbl, _ in cfg.CATEGORIES}.get(self.category, "")
+
+    @property
     def company_label(self) -> str:
         from config import values as cfg
         return dict(cfg.COMPANIES).get(self.company, "")
@@ -83,10 +89,11 @@ class VazifaEvent(AppendOnlyModel):  # CORE: reusable — the task's history, wr
     MAXFIY = "maxfiy"
     TAKROR = "takror"
     IZOH = "izoh"
+    YONALISH = "yonalish"
     KINDS = [(YARATILDI, "Yaratildi"), (BAJARILDI, "Bajarildi"), (QAYTA_OCHILDI, "Qayta ochildi"),
              (BEKOR, "O'chirildi"), (MUDDAT, "Muddat o'zgardi"), (KIMGA, "Boshqaga o'tkazildi"), (NOM, "Nomi o'zgardi"),
              (KOMPANIYA, "Kompaniya o'zgardi"), (MUHIM, "Muhimlik o'zgardi"), (MAXFIY, "Maxfiylik o'zgardi"), (TAKROR, "Takrorlash o'zgardi"),
-             (IZOH, "Izoh")]
+             (IZOH, "Izoh"), (YONALISH, "Yo'nalish o'zgardi")]
     WEB = "web"
     TELEGRAM = "telegram"
     REPEAT = "takror"      # created automatically when a repeating task was closed

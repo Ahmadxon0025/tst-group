@@ -3,7 +3,7 @@
     <input type="hidden" name="next" value="{{ here|default:request.get_full_path }}">
     <textarea class="ttl" id="add-title" name="title" maxlength="300" required rows="2" placeholder="Masalan: NBU ma'lumotnoma ertaga @abdurazzoq #guruh !" aria-label="Nima qilish kerak"></textarea>
     <div class="qa-chips" id="qa-chips" aria-live="polite"></div>
-    <p class="qa-hint">Yozishda: <b>ertaga</b>, <b>juma</b>, <b>5-noyabr</b>, <b>@ism</b>, <b>#kompaniya</b>, <b>!</b> (muhim), <b>maxfiy</b>, <b>har dushanba</b> (takror)</p>
+    <p class="qa-hint">Yozishda: <b>ertaga</b>, <b>juma</b>, <b>5-noyabr</b>, <b>@ism</b>, <b>#kompaniya</b>, <b>/bank</b> (yo'nalish), <b>!</b> (muhim), <b>maxfiy</b>, <b>har dushanba</b> (takror)</p>
     <div><span class="lbl">Kim</span>
       <div class="pick">{% for p in side_people %}<label style="--p:{{ p.color }}"><input type="radio" name="kim" value="{{ p.username }}" required{% if default_assignee == p.username %} checked{% endif %}><span><span class="av" style="--p:{{ p.color }}">{{ p.initial }}</span>{{ p.name }}</span></label>{% endfor %}</div></div>
     <div><span class="lbl">Qachongacha</span>
@@ -19,6 +19,13 @@
         <div class="pick co-pick">
           <label style="--p:var(--muted)"><input type="radio" name="company" value=""{% if not default_company %} checked{% endif %}><span>Yo'q</span></label>
           {% for k, label in companies %}<label style="--p:var(--accent)"><input type="radio" name="company" value="{{ k }}"{% if default_company == k %} checked{% endif %}><span class="keep">{{ label }}</span></label>{% endfor %}
+        </div></div>
+    </div>
+    <div class="qa-row">
+      <div><span class="lbl">Yo'nalish</span>
+        <div class="pick co-pick">
+          <label style="--p:var(--muted)"><input type="radio" name="category" value=""{% if not default_category %} checked{% endif %}><span>Yo'q</span></label>
+          {% for k, label in categories %}<label style="--p:var(--accent)"><input type="radio" name="category" value="{{ k }}"{% if default_category == k %} checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
         </div></div>
     </div>
     <div class="qa-row">
@@ -54,6 +61,7 @@
       if(j.due){due.value=j.due;mark();h+=chip('📅 '+j.due_label);}
       if(j.who){var r=d.querySelector('input[name=kim][value="'+j.who+'"]');if(r)r.checked=true;h+=chip('👤 '+j.who_name);}
       if(j.company){var c=d.querySelector('input[name=company][value="'+j.company+'"]');if(c)c.checked=true;h+=chip('#'+j.company_label,'keep');}
+      if(j.category){var g=d.querySelector('input[name=category][value="'+j.category+'"]');if(g)g.checked=true;h+=chip('/'+j.category_label);}
       document.getElementById('add-imp').checked=!!j.important||document.getElementById('add-imp').dataset.manual==='1'&&document.getElementById('add-imp').checked;
       if(j.important)h+=chip('❗ Muhim','imp');
       if(j.private){document.getElementById('add-prv').checked=true;h+=chip('🔒 Maxfiy');}

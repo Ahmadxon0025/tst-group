@@ -45,7 +45,8 @@ def user_context(request):  # CORE: reusable — templates see `me` and the side
     from vazifalar import services as sv
 
     me = getattr(request, "account", None)
-    ctx = {"me": me, "product_title": cfg.PRODUCT_TITLE, "companies": cfg.COMPANIES}
+    ctx = {"me": me, "product_title": cfg.PRODUCT_TITLE, "companies": cfg.COMPANIES,
+           "categories": [(k, lbl) for k, lbl, _ in cfg.CATEGORIES]}
     if me is None:
         return ctx
     today = dates.today()
@@ -61,4 +62,5 @@ def user_context(request):  # CORE: reusable — templates see `me` and the side
     ctx["side_people"] = people
     ctx["side_kim"] = (request.GET.get("kim") or "all") if request.path == "/" else ""
     ctx["side_k"] = (request.GET.get("k") or "") if request.path in ("/", "/shtab/") else ""
+    ctx["side_c"] = (request.GET.get("c") or "") if request.path == "/" else ""
     return ctx

@@ -57,6 +57,15 @@ def _back(request, default="/"):
     return nxt if nxt.startswith("/") and not nxt.startswith("//") else default
 
 
+def category_filter(request) -> str:  # CORE: reusable — ?c=<area of work>
+    c = request.GET.get("c") or ""
+    return c if c in {k for k, _, _ in cfg.CATEGORIES} else ""
+
+
+def category_label(key: str) -> str:
+    return {k: lbl for k, lbl, _ in cfg.CATEGORIES}.get(key, "")
+
+
 def _filters(request, me):
     """Person (?kim=) and company (?k=) filters, applied on top of what this person may see."""
     who = None
@@ -71,6 +80,9 @@ def _filters(request, me):
         qs = qs.filter(assignee=who)
     if company:
         qs = qs.filter(company=company)
+    cat = category_filter(request)
+    if cat:
+        qs = qs.filter(category=cat)
     return qs, who, company
 
 
@@ -115,6 +127,9 @@ def hafta(request):
     q = {"w": w, "kim": who.username if who else "all"}
     if company:
         q["k"] = company
+    cat = category_filter(request)
+    if cat:
+        q["c"] = cat
     here = f"/?{urlencode(q)}"
 
     def link(**kw):
@@ -123,6 +138,8 @@ def hafta(request):
     title = who.name if who else "Hafta"
     if company:
         title = f"{title} · {dict(cfg.COMPANIES)[company]}" if who else dict(cfg.COMPANIES)[company]
+    if cat:
+        title = f"{title} · {category_label(cat)}" if (who or company) else category_label(cat)
     return render(request, "vazifalar/hafta.html", {
         "days": days, "overdue": overdue, "inbox": inbox, "month_label": dates.month_label(start, end), "title": title,
         "prev_link": link(w=w - 1), "next_link": link(w=w + 3), "today_link": link(w=0),
@@ -133,7 +150,10 @@ def hafta(request):
             {"username": p.username, "label": p.name, "color": p.color, "initial": p.initial,
              "href": link(kim=p.username), "on": who is not None and who.pk == p.pk}
             for p in sv.assignable_people()],
-        "default_assignee": (who.username if who else ""), "default_company": company,
+        "default_assignee": (who.username if who else ""), "default_company": company, "default_category": cat,
+        "category": cat,
+        "category_links": [{"key": "", "label": "Hammasi", "href": link(c=""), "on": not cat}] + [
+            {"key": k, "label": lbl, "href": link(c=k), "on": cat == k} for k, lbl, _ in cfg.CATEGORIES],
     })
 
 
@@ -245,7 +265,8 @@ def create(request):
                        company=request.POST.get("company") or parsed.company or "",
                        important=bool(request.POST.get("important")) or parsed.important,
                        repeat=request.POST.get("repeat") or parsed.repeat,
-                       private=bool(request.POST.get("private")) or parsed.private)
+                       private=bool(request.POST.get("private")) or parsed.private,
+                       category=request.POST.get("category") or parsed.category or "")
         messages.success(request, "Qo'shildi.")
     except sv.NotAllowed as e:
         messages.error(request, str(e))
@@ -269,7 +290,7 @@ def bulk_create(request):
         who = UserAccount.objects.filter(username=p.who or me.username, is_active=True).first()
         try:
             sv.create_task(me, p.title or raw, who, p.due, company=p.company or "", important=p.important,
-                           repeat=p.repeat, private=p.private)
+                           repeat=p.repeat, private=p.private, category=p.category or "")
             made += 1
         except sv.NotAllowed as e:
             failed.append(f"{raw[:40]}: {e}")
@@ -350,10 +371,12 @@ def save(request, pk):
     """The edit window's Saqlash: title, person, date, company in one go."""
     who = UserAccount.objects.filter(username=request.POST.get("kim") or "", is_active=True).first()
     company = request.POST.get("company")
+    category = request.POST.get("category")
     sv.update_task(request.account, pk, title=request.POST.get("title"), assignee=who,
                    due_date=(None if (request.POST.get("due") or "").strip() == ""
                              else (_parse_date(request.POST.get("due")) or sv.UNSET)),
                    company=(company if company is not None else None),
+                   category=(category if category is not None else None),
                    important=bool(request.POST.get("important")),
                    private=bool(request.POST.get("private")),
                    repeat=request.POST.get("repeat", None))
