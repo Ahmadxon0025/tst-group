@@ -1,4 +1,4 @@
-/* CORE: reusable — Todoist-style behaviour: click a task → edit window; drag a card to another day → new date.
+/* CORE: reusable — Todoist-style behaviour: click a task → edit window; drag a card to another day → new date, or between two cards → new place.
    Everything still works without this file (links open the task page). */
 (function () {
   var dlg = document.getElementById("task"), body = document.getElementById("task-body");
@@ -146,13 +146,28 @@
     }
     return null;
   }
+  // the card the dragged one would land above (null = end of the column), from the pointer's height
+  var mark = document.createElement("div"); mark.className = "dropmark";
+  function slot(col, y) {
+    var cards = col.querySelectorAll(":scope > .card");
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i] === dragged) continue;
+      var r = cards[i].getBoundingClientRect();
+      if (y < r.top + r.height / 2) return cards[i];
+    }
+    return null;
+  }
+  function endOf(col) { return col.querySelector(":scope > .donelink, :scope > .addline, :scope > .none"); }
   document.addEventListener("dragover", function (e) {
     var col = colAt(e);
     if (!dragged || !col) return;
     e.preventDefault(); e.dataTransfer.dropEffect = "move";
     document.querySelectorAll(".col.drop").forEach(function (c) { if (c !== col) c.classList.remove("drop"); });
     col.classList.add("drop");
+    var ref = slot(col, e.clientY) || endOf(col);
+    if (mark.nextSibling !== ref || mark.parentNode !== col) col.insertBefore(mark, ref);   // the line shows the landing place
   });
+  document.addEventListener("dragend", function () { if (mark.parentNode) mark.remove(); });
   function recount() {
     document.querySelectorAll(".col").forEach(function (col) {
       var n = col.querySelectorAll(".card:not(.done)").length, c = col.querySelector(".js-count, .ch .c");
@@ -163,13 +178,20 @@
     var col = colAt(e);
     if (!dragged || !col) return;
     e.preventDefault();
+    if (mark.parentNode) mark.remove();
     var card = dragged, from = card.parentNode, next = card.nextSibling;
-    var anchor = col.querySelector(".donelink, .addline, .none");
-    col.insertBefore(card, anchor);           // move now; put back if the server says no
-    card.classList.remove("is-late");
-    var late = card.querySelector(".lateby"); if (late) late.remove();
+    var ref = slot(col, e.clientY);
+    var same = from === col;
+    col.insertBefore(card, ref || endOf(col));   // move now, exactly where it was dropped; put back if the server says no
+    var hint = col.querySelector(":scope > .inbox-hint"); if (hint) hint.remove();
+    if (!same) { card.classList.remove("is-late"); var late = card.querySelector(".lateby"); if (late) late.remove(); }
+    function near(el, dir) {                      // the open card just above / below, skipping anything else
+      for (el = el[dir]; el; el = el[dir]) if (el.classList && el.classList.contains("card")) return el.dataset.id;
+      return "";
+    }
     recount();
     var fd = new FormData(); fd.append("due", col.dataset.date);
+    fd.append("after", near(card, "previousElementSibling")); fd.append("before", near(card, "nextElementSibling"));
     fetch("/vazifa/" + card.dataset.id + "/kunga/", {method: "POST", body: fd, credentials: "same-origin",
       headers: {"X-CSRFToken": csrf}})
       .then(function (r) { return r.json().then(function (j) { if (!r.ok || !j.ok) throw j; }); })

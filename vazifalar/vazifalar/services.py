@@ -341,3 +341,33 @@ def set_category(actor: UserAccount, task_id: int, category: str,
         _event(task, VazifaEvent.YONALISH, actor, source, note=task.category_label or "—")
         audit.write(actor.username, "vazifa_yonalish", "vazifa", task.pk, old={"category": old}, new={"category": category})
     return task
+
+
+def place(actor: UserAccount, task_id: int, new_due, after_id=None, before_id=None,
+          source: str = VazifaEvent.WEB) -> Vazifa:
+    # CORE: reusable — drag-and-drop: put the task on a day (new_due None = Rejasiz) and between two cards.
+    # after_id / before_id are the cards it was dropped under / above; both empty = keep its place.
+    with transaction.atomic():
+        task = _locked(task_id)
+        if task.due_date != new_due:
+            task = change_due(actor, task_id, new_due, source)          # checks who may change the date
+        elif not can_touch(actor, task):
+            raise NotAllowed("Bu vazifa sizniki emas.")
+        ids = [int(x) for x in (after_id, before_id) if x and int(x) != task.pk]
+        near = {t.pk: t.position for t in Vazifa.objects.filter(pk__in=ids)}
+        above = near.get(int(after_id)) if after_id else None
+        below = near.get(int(before_id)) if before_id else None
+        if above is None and below is None:
+            return task
+        if above is not None and below is not None:
+            pos = (above + below) / 2
+        elif below is not None:
+            pos = below - 1
+        else:
+            pos = above + 1
+        if pos != task.position:
+            old = task.position
+            task.position = pos
+            task.save(update_fields=["position"])
+            audit.write(actor.username, "vazifa_tartib", "vazifa", task.pk, old={"position": old}, new={"position": pos})
+    return task

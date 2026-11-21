@@ -106,7 +106,7 @@ def hafta(request):
     mark(overdue)
 
     inbox = mark(list(_with_counts(base.filter(status=Vazifa.YANGI, due_date__isnull=True))
-                      .order_by("-important", "created_at")))
+                      .order_by("position", "created_at")))
 
     week = (_with_counts(base.filter(due_date__range=(start, end)))
             .exclude(status=Vazifa.YANGI, due_date__lt=today))   # open past tasks live in Kechikkan only
@@ -118,7 +118,7 @@ def hafta(request):
     for i in range(cfg.BOARD_DAYS):
         d = start + timedelta(days=i)
         on_day = by_day.get(d, [])
-        tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: (not t.important, t.created_at)))
+        tasks = mark(sorted((t for t in on_day if not t.is_done), key=lambda t: (t.position, t.created_at)))
         days.append({"iso": d.isoformat(), "dm": dates.day_month_short(d), "wd": cfg.DAY_LONG[d.weekday()],
                      "is_today": d == today, "is_past": d < today, "tasks": tasks,
                      "done": mark(sorted((t for t in on_day if t.is_done), key=lambda t: t.done_at or t.created_at)),
@@ -386,17 +386,22 @@ def save(request, pk):
 @login_required
 @require_POST
 def move(request, pk: int):
-    """Drag-and-drop on the board: a new date, answered in JSON (the page moves the card itself)."""
+    """Drag-and-drop on the board: a new date and/or a new place among the day's cards, answered in JSON
+    (the page moves the card itself). `after` / `before` are the ids of the cards above / below the drop."""
     raw = (request.POST.get("due") or "").strip()
     new_due = _parse_date(raw) if raw else None          # "" → back to Rejasiz
     try:
         if raw and new_due is None:
             raise sv.NotAllowed("Sana noto'g'ri.")
-        if new_due and new_due < dates.today():
+        after, before = request.POST.get("after") or None, request.POST.get("before") or None
+        cur = Vazifa.objects.filter(pk=pk).values_list("due_date", flat=True).first()
+        if new_due and new_due < dates.today() and new_due != cur:
             raise sv.NotAllowed("O'tgan kunga qo'yib bo'lmaydi.")
-        t = sv.change_due(request.account, pk, new_due)
+        t = sv.place(request.account, pk, new_due, after, before)
     except Vazifa.DoesNotExist:
         raise Http404
+    except (ValueError, TypeError):
+        return JsonResponse({"ok": False, "error": "Noto'g'ri so'rov."}, status=400)
     except sv.NotAllowed as e:
         return JsonResponse({"ok": False, "error": str(e)}, status=400)
     return JsonResponse({"ok": True, "due": t.due_date.isoformat() if t.due_date else ""})

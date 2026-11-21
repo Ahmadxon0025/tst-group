@@ -8,10 +8,17 @@ A task has five things: what (title), who (assignee), by when (due_date), status
 - `status` and `due_date` on Vazifa are the current state; they change ONLY inside vazifalar/services.py,
   in the same transaction as the event that explains the change (guard test: state == last event).
 """
+import time
+
 from django.db import models
 
 from accounts.models import UserAccount
 from core.ledger import AppendOnlyModel, LedgerModel
+
+
+def new_position() -> float:
+    """Where a new task sits in its column: after everything older (seconds since 1970)."""
+    return time.time()
 
 
 class Vazifa(LedgerModel):  # CORE: reusable
@@ -35,6 +42,7 @@ class Vazifa(LedgerModel):  # CORE: reusable
     created_by = models.ForeignKey(UserAccount, on_delete=models.PROTECT, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
     done_at = models.DateTimeField(null=True, blank=True)
+    position = models.FloatField(default=new_position)   # hand-set order inside a day column (smaller = higher)
 
     class Meta:
         db_table = "vazifa"
